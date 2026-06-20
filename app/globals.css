@@ -18,7 +18,16 @@ body {
   margin: 0;
   background: #f6f0e7;
   color: #27211c;
+  font-size: 17px;
+  line-height: 1.7;
   text-rendering: optimizeLegibility;
+}
+
+@media (min-width: 640px) {
+  body {
+    font-size: 18px;
+    line-height: 1.68;
+  }
 }
 
 ::selection {

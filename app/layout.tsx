@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 
-const serif = Cormorant_Garamond({
+const serif = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-serif",
-  display: "swap"
+  display: "swap",
+  weight: ["400", "500", "600", "700"]
 });
 
 const sans = Inter({
@@ -54,7 +55,7 @@ export default function RootLayout({
             <Link href="/" className="font-serif text-2xl leading-none text-ink">
               Behzad Gharehjanloo
             </Link>
-            <nav aria-label="Primary navigation" className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+            <nav aria-label="Primary navigation" className="flex flex-wrap gap-x-6 gap-y-2 text-base text-muted">
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href} className="transition hover:text-ink">
                   {item.label}

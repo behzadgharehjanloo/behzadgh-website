@@ -7,7 +7,7 @@ type ButtonLinkProps = ComponentPropsWithoutRef<typeof Link> & {
 
 export function ButtonLink({ className = "", variant = "primary", ...props }: ButtonLinkProps) {
   const base =
-    "inline-flex min-h-11 items-center justify-center rounded-full px-5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-clay/30 focus:ring-offset-2 focus:ring-offset-paper";
+    "inline-flex min-h-12 items-center justify-center rounded-full px-6 text-base font-medium transition focus:outline-none focus:ring-2 focus:ring-clay/30 focus:ring-offset-2 focus:ring-offset-paper";
   const styles =
     variant === "primary"
       ? "bg-ink text-paper hover:bg-clay"

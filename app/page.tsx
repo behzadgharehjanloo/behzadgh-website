@@ -3,15 +3,21 @@ import { NoteList } from "@/components/NoteList";
 
 export default function Home() {
   return (
-    <div className="mx-auto w-full max-w-6xl px-5 pb-16 pt-6 sm:px-8 lg:px-10">
-      <section className="grid items-center gap-10 py-8 md:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.78fr)] md:py-16">
+    <div className="mx-auto w-full max-w-6xl px-5 pb-20 pt-8 sm:px-8 lg:px-10">
+      <section className="grid items-center gap-12 py-10 md:grid-cols-[minmax(0,0.92fr)_minmax(320px,0.78fr)] md:py-20">
         <div>
           <p className="text-sm uppercase text-sage">behzadgh.com</p>
-          <h1 className="mt-5 max-w-3xl font-serif text-5xl leading-[0.98] text-ink sm:text-6xl lg:text-7xl">
+          <h1 className="mt-5 max-w-3xl font-serif text-[34px] font-medium leading-[1.15] text-ink sm:text-5xl sm:leading-[1.1]">
             Behzad Gharehjanloo
           </h1>
-          <p className="mt-6 max-w-xl text-xl leading-8 text-muted">
-            Notes, photographs, and occasional letters.
+          <p className="mt-7 max-w-[680px] text-[17px] leading-[1.7] text-muted sm:text-lg sm:leading-[1.68]">
+            For years, people have told me:
+            <br />
+            &quot;You should write a book.&quot;
+            <br />
+            I wasn&apos;t sure they were right.
+            <br />
+            This website is where I&apos;m documenting the process of finding out.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <ButtonLink href="/notes">Read Notes</ButtonLink>
@@ -31,11 +37,11 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="pt-8">
+      <section className="pt-12 md:pt-16">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <p className="text-sm uppercase text-sage">Latest</p>
-            <h2 className="mt-2 font-serif text-4xl text-ink">Notes</h2>
+            <h2 className="mt-2 font-serif text-[26px] font-medium leading-[1.2] text-ink sm:text-[32px]">Notes</h2>
           </div>
           <ButtonLink href="/notes" variant="secondary" className="hidden sm:inline-flex">
             Archive
