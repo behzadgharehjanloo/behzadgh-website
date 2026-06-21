@@ -39,7 +39,3 @@ a {
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
 }
-
-.site-shell:has(.home-hero) > .site-header {
-  display: none;
-}
