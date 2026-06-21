@@ -44,7 +44,7 @@ a {
 
 @media (max-width: 950px) and (max-height: 500px) and (orientation: landscape) {
   header {
-    height: 96px;
+    height: 96px !important;
   }
 
   header > div {
@@ -56,65 +56,67 @@ a {
   header nav {
     column-gap: 12px;
     row-gap: 6px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
+    font-size: 11px !important;
+    letter-spacing: 0.1em !important;
   }
 
   .home-hero {
-    min-height: calc(100svh - 96px);
+    min-height: calc(100svh - 96px) !important;
   }
 
   .home-hero-image {
-    bottom: 0;
-    height: auto;
-    left: auto;
-    right: 0;
-    top: 0;
-    width: 44%;
-    background-position: 72% center;
+    bottom: 0 !important;
+    height: auto !important;
+    inset: auto 0 0 auto !important;
+    left: auto !important;
+    right: 0 !important;
+    top: 0 !important;
+    width: 44% !important;
+    background-position: 72% center !important;
   }
 
   .home-hero-image-shade {
-    bottom: 0;
-    height: auto;
-    left: auto;
-    right: 0;
-    top: 0;
-    width: 44%;
-    background: linear-gradient(90deg, rgba(250, 246, 238, 0.08), rgba(5, 10, 18, 0.1));
+    bottom: 0 !important;
+    height: auto !important;
+    inset: auto 0 0 auto !important;
+    left: auto !important;
+    right: 0 !important;
+    top: 0 !important;
+    width: 44% !important;
+    background: linear-gradient(90deg, rgba(250, 246, 238, 0.08), rgba(5, 10, 18, 0.1)) !important;
   }
 
   .home-hero-cream {
-    background: linear-gradient(90deg, rgba(250, 246, 238, 0.98) 0%, rgba(250, 246, 238, 0.94) 54%, rgba(250, 246, 238, 0.15) 72%);
+    background: linear-gradient(90deg, rgba(250, 246, 238, 0.98) 0%, rgba(250, 246, 238, 0.94) 54%, rgba(250, 246, 238, 0.15) 72%) !important;
   }
 
   .home-hero-content {
-    margin-left: 0;
-    margin-right: auto;
-    max-width: none;
-    padding: 22px 24px;
-    width: 54%;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+    max-width: none !important;
+    padding: 22px 24px !important;
+    width: 54% !important;
   }
 
   .home-hero-title {
-    font-size: 31px;
-    line-height: 1.08;
-    margin-top: 14px;
+    font-size: 31px !important;
+    line-height: 1.08 !important;
+    margin-top: 14px !important;
   }
 
   .home-hero-copy {
-    font-size: 13px;
-    line-height: 1.48;
-    margin-top: 14px;
+    font-size: 13px !important;
+    line-height: 1.48 !important;
+    margin-top: 14px !important;
   }
 
   .home-hero-copy + .home-hero-button {
-    margin-top: 16px;
+    margin-top: 16px !important;
   }
 
   .home-hero-button {
-    min-height: 40px;
-    padding-left: 20px;
-    padding-right: 20px;
+    min-height: 40px !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
   }
 }
