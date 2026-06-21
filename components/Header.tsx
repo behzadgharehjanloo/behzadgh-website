@@ -29,23 +29,21 @@ export function Header() {
           Behzad Gharehjanloo
         </Link>
 
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 md:justify-end">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-3 md:justify-end">
           <nav
             aria-label="Primary navigation"
-            className="flex flex-wrap items-center gap-x-3 gap-y-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0b1620] sm:gap-x-5 sm:text-[13px] md:gap-x-8 md:text-sm md:font-medium"
+            className="flex min-w-0 flex-nowrap items-center gap-x-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#0b1620] sm:gap-x-3 sm:text-[12px] sm:tracking-[0.1em] md:flex-wrap md:gap-x-8 md:gap-y-3 md:text-sm md:font-medium md:tracking-[0.14em]"
           >
             {navItems.map((item) => (
-              <span key={item.href} className="contents">
-                <Link
-                  href={item.href}
-                  className={`pb-2 transition hover:text-[#8f6d2f] ${
-                    isActive(pathname, item.href) ? "border-b border-[#b08a45]" : "border-b border-transparent"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-                {item.href === "/about" ? <span className="mobile-nav-break basis-full md:hidden" aria-hidden="true" /> : null}
-              </span>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`whitespace-nowrap pb-2 transition hover:text-[#8f6d2f] ${
+                  isActive(pathname, item.href) ? "border-b border-[#b08a45]" : "border-b border-transparent"
+                }`}
+              >
+                {item.label}
+              </Link>
             ))}
           </nav>
 

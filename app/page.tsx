@@ -27,7 +27,7 @@ export default function Home() {
             <br />
             I wasn&apos;t sure they were right.
             <br />
-            This website is where I&apos;m documenting
+            This website is where I&apos;m documenting{" "}
             <br className="hidden md:block" />
             the process of finding out.
           </p>
