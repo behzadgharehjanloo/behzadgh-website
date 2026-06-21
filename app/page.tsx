@@ -4,7 +4,7 @@ import { NoteList } from "@/components/NoteList";
 export default function Home() {
   return (
     <div className="w-full">
-      <section className="home-hero relative flex min-h-[calc(100svh-132px)] w-full flex-col overflow-hidden bg-[#faf6ee] md:min-h-[calc(100vh-87px)] md:justify-center">
+      <section className="home-hero relative flex min-h-[calc(100svh-159px)] w-full flex-col overflow-hidden bg-[#faf6ee] md:min-h-[calc(100vh-87px)] md:justify-center">
         <div
           className="absolute inset-x-0 bottom-0 h-[45vh] bg-cover bg-[position:76%_center] md:inset-0 md:h-auto md:bg-[position:center_center]"
           style={{ backgroundImage: "url('/train-window-hero.png')" }}
