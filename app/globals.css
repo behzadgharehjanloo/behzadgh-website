@@ -60,6 +60,10 @@ a {
     letter-spacing: 0.1em !important;
   }
 
+  .mobile-nav-break {
+    display: none;
+  }
+
   .home-hero {
     min-height: calc(100svh - 96px) !important;
   }

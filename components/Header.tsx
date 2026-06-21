@@ -44,7 +44,7 @@ export function Header() {
                 >
                   {item.label}
                 </Link>
-                {item.href === "/about" ? <span className="basis-full md:hidden" aria-hidden="true" /> : null}
+                {item.href === "/about" ? <span className="mobile-nav-break basis-full md:hidden" aria-hidden="true" /> : null}
               </span>
             ))}
           </nav>
