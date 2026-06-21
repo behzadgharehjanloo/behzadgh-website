@@ -41,3 +41,78 @@ a {
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
 }
+
+@media (max-width: 767px) and (orientation: landscape) {
+  header {
+    height: 96px;
+  }
+
+  header > div {
+    gap: 10px;
+    padding-bottom: 12px;
+    padding-top: 12px;
+  }
+
+  header nav {
+    column-gap: 12px;
+    row-gap: 6px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .home-hero {
+    min-height: calc(100svh - 96px);
+  }
+
+  .home-hero-image {
+    bottom: 0;
+    height: auto;
+    left: auto;
+    right: 0;
+    top: 0;
+    width: 46%;
+    background-position: 72% center;
+  }
+
+  .home-hero-image-shade {
+    bottom: 0;
+    height: auto;
+    left: auto;
+    right: 0;
+    top: 0;
+    width: 46%;
+    background: linear-gradient(90deg, rgba(250, 246, 238, 0.08), rgba(5, 10, 18, 0.1));
+  }
+
+  .home-hero-cream {
+    background: linear-gradient(90deg, rgba(250, 246, 238, 0.98) 0%, rgba(250, 246, 238, 0.94) 54%, rgba(250, 246, 238, 0.15) 72%);
+  }
+
+  .home-hero-content {
+    max-width: none;
+    padding: 22px 24px;
+    width: 58%;
+  }
+
+  .home-hero-title {
+    font-size: 31px;
+    line-height: 1.08;
+    margin-top: 14px;
+  }
+
+  .home-hero-copy {
+    font-size: 13px;
+    line-height: 1.48;
+    margin-top: 14px;
+  }
+
+  .home-hero-copy + .home-hero-button {
+    margin-top: 16px;
+  }
+
+  .home-hero-button {
+    min-height: 40px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

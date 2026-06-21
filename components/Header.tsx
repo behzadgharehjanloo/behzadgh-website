@@ -35,15 +35,17 @@ export function Header() {
             className="flex flex-wrap items-center gap-x-3 gap-y-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0b1620] sm:gap-x-5 sm:text-[13px] md:gap-x-8 md:text-sm md:font-medium"
           >
             {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`pb-2 transition hover:text-[#8f6d2f] ${
-                  isActive(pathname, item.href) ? "border-b border-[#b08a45]" : "border-b border-transparent"
-                }`}
-              >
-                {item.label}
-              </Link>
+              <span key={item.href} className="contents">
+                <Link
+                  href={item.href}
+                  className={`pb-2 transition hover:text-[#8f6d2f] ${
+                    isActive(pathname, item.href) ? "border-b border-[#b08a45]" : "border-b border-transparent"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+                {item.href === "/about" ? <span className="basis-full md:hidden" aria-hidden="true" /> : null}
+              </span>
             ))}
           </nav>
 
