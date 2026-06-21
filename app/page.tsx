@@ -20,37 +20,26 @@ export default function Home() {
         <div className="absolute inset-x-0 bottom-0 h-[45vh] bg-[linear-gradient(180deg,rgba(250,246,238,0.04)_0%,rgba(250,246,238,0)_40%,rgba(5,10,18,0.12)_100%)] md:inset-0 md:h-auto md:bg-[linear-gradient(90deg,rgba(250,246,238,0.94)_0%,rgba(250,246,238,0.82)_30%,rgba(250,246,238,0.24)_56%,rgba(7,10,15,0.08)_100%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(250,246,238,0.98)_0%,rgba(250,246,238,0.92)_49%,rgba(250,246,238,0)_68%)] md:bg-[linear-gradient(180deg,rgba(250,246,238,0.34)_0%,rgba(250,246,238,0)_28%)]" />
 
-        <header className="relative z-20 mx-auto flex w-full max-w-7xl items-start justify-between px-6 pt-8 sm:px-10 md:absolute md:inset-x-0 md:top-0 md:px-12 lg:px-14">
+        <header className="relative z-20 mx-auto flex w-full max-w-7xl flex-col items-start gap-6 px-6 pt-8 sm:px-10 md:absolute md:inset-x-0 md:top-0 md:flex-row md:items-start md:justify-between md:px-12 lg:px-14">
           <Link href="/" className="font-serif text-[22px] leading-tight text-[#0b1620] md:text-[28px]">
             Behzad Gharehjanloo
           </Link>
           <nav
             aria-label="Primary navigation"
-            className="hidden items-center gap-10 text-sm font-medium uppercase tracking-[0.14em] text-white md:flex"
+            className="flex flex-wrap items-center gap-x-5 gap-y-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#0b1620] sm:text-[13px] md:gap-10 md:text-sm md:font-medium md:text-white"
           >
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`pb-4 transition hover:text-[#d8b36a] ${
-                  item.href === "/" ? "border-b border-[#b08a45] text-[#f8f1e5]" : ""
+                className={`pb-2 transition hover:text-[#8f6d2f] md:pb-4 md:hover:text-[#d8b36a] ${
+                  item.href === "/" ? "border-b border-[#b08a45] md:text-[#f8f1e5]" : ""
                 }`}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
-          <button
-            type="button"
-            aria-label="Open navigation"
-            className="flex h-11 w-11 items-center justify-center text-[#0b1620] md:hidden"
-          >
-            <span className="flex w-7 flex-col gap-1.5">
-              <span className="h-0.5 w-full bg-current" />
-              <span className="h-0.5 w-full bg-current" />
-              <span className="h-0.5 w-full bg-current" />
-            </span>
-          </button>
         </header>
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-[47vh] pt-14 sm:px-10 md:px-12 md:pb-16 md:pt-28 lg:px-14">
