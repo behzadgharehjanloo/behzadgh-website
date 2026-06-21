@@ -16,8 +16,8 @@ html {
 
 body {
   margin: 0;
-  background: #f6f0e7;
-  color: #27211c;
+  background: #faf6ee;
+  color: #111827;
   font-size: 17px;
   line-height: 1.7;
   text-rendering: optimizeLegibility;
@@ -32,7 +32,7 @@ body {
 
 ::selection {
   background: #d8c2a8;
-  color: #27211c;
+  color: #111827;
 }
 
 a {
