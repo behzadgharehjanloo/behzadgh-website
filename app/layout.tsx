@@ -50,14 +50,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${serif.variable} ${sans.variable} min-h-screen font-sans antialiased`}>
-        <div className="min-h-screen bg-paper">
-          <header className="absolute inset-x-0 top-0 z-20">
-            <nav
-              aria-label="Primary navigation"
-              className="mx-auto flex w-full max-w-6xl justify-center gap-x-6 gap-y-2 px-5 py-6 text-sm font-medium uppercase tracking-[0.18em] text-[#111827] sm:justify-end sm:px-8 lg:px-10"
-            >
+        <div className="site-shell min-h-screen bg-paper">
+          <header className="site-header mx-auto flex w-full max-w-6xl flex-col gap-5 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
+            <Link href="/" className="font-serif text-2xl leading-none text-ink">
+              Behzad Gharehjanloo
+            </Link>
+            <nav aria-label="Primary navigation" className="flex flex-wrap gap-x-6 gap-y-2 text-base text-muted">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className="transition hover:text-[#8f6d2f]">
+                <Link key={item.href} href={item.href} className="transition hover:text-ink">
                   {item.label}
                 </Link>
               ))}
