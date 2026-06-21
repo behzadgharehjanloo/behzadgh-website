@@ -1,3 +1,4 @@
+import { ButtonLink } from "@/components/ButtonLink";
 import { NoteList } from "@/components/NoteList";
 
 export default function Home() {
