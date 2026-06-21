@@ -23,8 +23,8 @@ export function Header() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-line/60 bg-[#faf6ee]/95 backdrop-blur">
-      <div className="mx-auto flex min-h-[159px] w-full max-w-7xl flex-col gap-5 px-5 py-5 sm:px-8 md:min-h-0 md:flex-row md:items-center md:justify-between md:px-10 lg:px-14">
+    <header className="sticky top-0 z-30 h-[160px] border-b border-line/60 bg-[#faf6ee]/95 backdrop-blur md:h-[76px]">
+      <div className="mx-auto flex h-full w-full max-w-7xl flex-col gap-5 px-5 py-5 sm:px-8 md:flex-row md:items-center md:justify-between md:px-10 md:py-0 lg:px-14">
         <Link href="/" className="font-serif text-[22px] leading-tight text-[#0b1620] md:text-[28px]">
           Behzad Gharehjanloo
         </Link>
