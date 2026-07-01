@@ -48,7 +48,7 @@ export default async function NotePage({ params }: NotePageProps) {
   return (
     <article className="mx-auto w-full max-w-3xl px-5 pb-16 pt-12 sm:px-8">
       <Link href="/notes" className="text-sm text-muted transition hover:text-ink">
-        Back to Notes
+        Back to Earlier Notes
       </Link>
       <p className="mt-10 text-sm uppercase text-sage">Note {note.number}</p>
       <h1 className="mt-3 font-serif text-5xl leading-tight text-ink sm:text-6xl">{note.title}</h1>

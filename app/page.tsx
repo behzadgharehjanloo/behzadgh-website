@@ -43,11 +43,11 @@ export default function Home() {
       <section className="mx-auto w-full max-w-6xl px-5 pb-20 pt-16 sm:px-8 md:pt-20 lg:px-10">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm uppercase text-sage">Latest</p>
+            <p className="text-sm uppercase text-sage">Earlier</p>
             <h2 className="mt-2 font-serif text-[26px] font-medium leading-[1.2] text-ink sm:text-[32px]">Notes</h2>
           </div>
           <ButtonLink href="/notes" variant="secondary" className="hidden sm:inline-flex">
-            Archive
+            Earlier Notes
           </ButtonLink>
         </div>
         <NoteList limit={3} />

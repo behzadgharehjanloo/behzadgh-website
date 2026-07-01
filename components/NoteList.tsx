@@ -5,28 +5,23 @@ type NoteListProps = {
   limit?: number;
 };
 
-const dateFormatter = new Intl.DateTimeFormat("en", {
-  month: "long",
-  day: "numeric",
-  year: "numeric"
-});
-
 export function NoteList({ limit }: NoteListProps) {
   const visibleNotes = typeof limit === "number" ? notes.slice(0, limit) : notes;
 
   return (
-    <div className="divide-y divide-line border-y border-line">
+    <div className="grid gap-4">
       {visibleNotes.map((note) => (
-        <article key={note.slug} className="grid gap-4 py-6 md:grid-cols-[9rem_1fr]">
-          <p className="text-sm text-muted">{dateFormatter.format(new Date(`${note.date}T12:00:00`))}</p>
-          <div>
-            <Link href={`/notes/${note.slug}`} className="group inline-block">
-              <p className="text-sm uppercase text-sage">Note {note.number}</p>
-              <h2 className="mt-1 font-serif text-3xl leading-tight text-ink group-hover:underline">
-                {note.title}
-              </h2>
-            </Link>
+        <article key={note.slug} className="border-y border-line py-6 sm:grid sm:grid-cols-[7rem_1fr] sm:gap-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-sage">Note {note.number}</p>
+          <div className="mt-3 sm:mt-0">
+            <h2 className="font-serif text-[28px] font-medium leading-tight text-ink sm:text-[34px]">{note.title}</h2>
             <p className="mt-3 max-w-2xl text-base leading-7 text-muted">{note.excerpt}</p>
+            <Link
+              href={`/notes/${note.slug}`}
+              className="mt-4 inline-flex text-sm font-semibold uppercase tracking-[0.12em] text-ink transition hover:text-clay"
+            >
+              Read &rarr;
+            </Link>
           </div>
         </article>
       ))}
