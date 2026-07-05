@@ -11,101 +11,101 @@ export const notes: Note[] = [
   {
     slug: "note-01",
     number: "01",
-    title: "Title placeholder",
+    title: "Note 01",
     date: "2026-01-01",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 01 placeholder."
     ]
   },
   {
     slug: "note-02",
     number: "02",
-    title: "Title placeholder",
+    title: "Note 02",
     date: "2026-01-02",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 02 placeholder."
     ]
   },
   {
     slug: "note-03",
     number: "03",
-    title: "Title placeholder",
+    title: "Note 03",
     date: "2026-01-03",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 03 placeholder."
     ]
   },
   {
     slug: "note-04",
     number: "04",
-    title: "Title placeholder",
+    title: "Note 04",
     date: "2026-01-04",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 04 placeholder."
     ]
   },
   {
     slug: "note-05",
     number: "05",
-    title: "Title placeholder",
+    title: "Note 05",
     date: "2026-01-05",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 05 placeholder."
     ]
   },
   {
     slug: "note-06",
     number: "06",
-    title: "Title placeholder",
+    title: "Note 06",
     date: "2026-01-06",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 06 placeholder."
     ]
   },
   {
     slug: "note-07",
     number: "07",
-    title: "Title placeholder",
+    title: "Note 07",
     date: "2026-01-07",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 07 placeholder."
     ]
   },
   {
     slug: "note-08",
     number: "08",
-    title: "Title placeholder",
+    title: "Note 08",
     date: "2026-01-08",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 08 placeholder."
     ]
   },
   {
     slug: "note-09",
     number: "09",
-    title: "Title placeholder",
+    title: "Note 09",
     date: "2026-01-09",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 09 placeholder."
     ]
   },
   {
     slug: "note-10",
     number: "10",
-    title: "Title placeholder",
+    title: "Note 10",
     date: "2026-01-10",
-    excerpt: "Short description placeholder.",
+    excerpt: "Placeholder for an earlier note.",
     body: [
-      "This note is a placeholder for now."
+      "Note 10 placeholder."
     ]
   }
 ];
