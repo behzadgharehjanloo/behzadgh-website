@@ -1,5 +1,23 @@
 # Vercel + Google Workspace Production Setup
 
+## Gmail API provider
+
+Email delivery uses the official `googleapis` package with an OAuth 2.0 refresh token. There is no Resend integration and no Google App Password. `lib/gmail-service.mjs` owns OAuth client creation, token refresh, Gmail message delivery, and reusable MIME construction. The existing durable Postgres outbox remains responsible for claiming, idempotency, retry backoff, terminal failure, and delivery status.
+
+The complete production environment-variable list is:
+
+- `DATABASE_URL`: Neon Postgres connection string.
+- `ADMIN_PASSWORD_HASH`: server-only private-admin password hash.
+- `AUTH_COOKIE_SECURE`: set to `true` on Vercel.
+- `SITE_URL`: set to `https://behzadgh.com`.
+- `EMAIL_TOKEN_SECRET`: server-only secret for confirmation and unsubscribe tokens.
+- `GOOGLE_CLIENT_ID`: OAuth 2.0 Web client ID.
+- `GOOGLE_CLIENT_SECRET`: OAuth 2.0 Web client secret.
+- `GOOGLE_REFRESH_TOKEN`: offline refresh token authorized as `still@behzadgh.com` with only `gmail.send`.
+- `CRON_SECRET`: server-only authorization value for the outbox Cron route.
+
+No email credential may use a `NEXT_PUBLIC_` prefix. The Gmail module reads credentials from the server environment only when constructing the authenticated service. It never returns or intentionally logs credentials, OAuth responses, provider error bodies, or recipient addresses.
+
 ## Do these steps in order
 
 1. In the Vercel project, open **Settings -> Git** and record the configured **Production Branch**. Merge this work into that branch before deploying.

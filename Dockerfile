@@ -30,6 +30,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
 COPY --from=builder --chown=nextjs:nodejs /app/db ./db
 COPY --from=builder --chown=nextjs:nodejs /app/lib/email-tokens.mjs ./lib/email-tokens.mjs
 COPY --from=builder --chown=nextjs:nodejs /app/lib/email-outbox.mjs ./lib/email-outbox.mjs
+COPY --from=builder --chown=nextjs:nodejs /app/lib/gmail-service.mjs ./lib/gmail-service.mjs
 
 USER nextjs
 EXPOSE 3000
