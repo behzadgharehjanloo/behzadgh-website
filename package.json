@@ -2,18 +2,25 @@
   "name": "behzadgh-website",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.15.0 <23"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:check": "node scripts/check-db.mjs"
   },
   "dependencies": {
+    "better-sqlite3": "^12.11.1",
     "next": "^15.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.15.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

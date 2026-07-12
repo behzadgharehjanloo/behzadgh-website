@@ -1,0 +1,14 @@
+services:
+  website:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_PATH: /app/data/behzad.sqlite
+    volumes:
+      - newsletter-data:/app/data
+
+volumes:
+  newsletter-data:
