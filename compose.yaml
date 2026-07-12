@@ -9,8 +9,29 @@ services:
       DATABASE_PATH: /app/data/behzad.sqlite
       ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?Set ADMIN_PASSWORD_HASH in .env}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
+      SITE_URL: ${SITE_URL:-https://behzadgh.com}
+      EMAIL_TOKEN_SECRET: ${EMAIL_TOKEN_SECRET:?Set EMAIL_TOKEN_SECRET in .env}
     volumes:
       - newsletter-data:/app/data
+
+  email-worker:
+    build:
+      context: .
+    restart: unless-stopped
+    command: ["sh", "-c", "while true; do node scripts/process-email-outbox.mjs; sleep 15; done"]
+    environment:
+      DATABASE_PATH: /app/data/behzad.sqlite
+      SITE_URL: ${SITE_URL:-https://behzadgh.com}
+      EMAIL_TOKEN_SECRET: ${EMAIL_TOKEN_SECRET:?Set EMAIL_TOKEN_SECRET in .env}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in .env}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in .env}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:?Set GOOGLE_REFRESH_TOKEN in .env}
+    volumes:
+      - newsletter-data:/app/data
+    healthcheck:
+      disable: true
+    depends_on:
+      - website
 
 volumes:
   newsletter-data:

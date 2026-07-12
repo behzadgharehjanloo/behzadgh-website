@@ -6,9 +6,10 @@ export const metadata: Metadata = {
 };
 
 const messages: Record<string, string> = {
-  saved: "Thanks. Your request has been saved. No email will be sent until confirmation is available.",
+  saved: "If this address can be subscribed, a confirmation email will arrive shortly.",
   invalid: "Enter a valid email address.",
-  limited: "Too many attempts were received. Please try again later."
+  limited: "Too many attempts were received. Please try again later.",
+  unavailable: "Subscriptions are temporarily unavailable. Please try again later."
 };
 
 export default async function SubscribePage({ searchParams }: { searchParams: Promise<{ result?: string }> }) {

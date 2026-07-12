@@ -19,6 +19,10 @@ export async function POST(request: Request) {
   const email = typeof value === "string" ? normalizeEmail(value) : null;
   if (!email) return redirectTo(request, "invalid");
 
-  subscribe(email);
+  try {
+    subscribe(email);
+  } catch {
+    return redirectTo(request, "unavailable");
+  }
   return redirectTo(request, "saved");
 }
