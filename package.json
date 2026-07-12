@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "node scripts/migrate.mjs",
-    "db:check": "node scripts/check-db.mjs"
+    "db:check": "node scripts/check-db.mjs",
+    "auth:hash-password": "node scripts/hash-password.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.11.1",

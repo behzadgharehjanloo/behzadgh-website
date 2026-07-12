@@ -36,4 +36,16 @@ npm run db:check
 
 Stop writes or use SQLite's online backup API before copying the database. Back up the database file from the persistent volume to storage outside the server, retain multiple dated copies, and periodically restore one into a temporary location and run `npm run db:check` against it. Never bake the live database into an image or commit it to Git.
 
-The database foundation currently contains migration metadata only. Subscriber, authentication, and email tables belong to later, separately reviewed migrations.
+The database contains migration metadata and the private-admin authentication tables described below. Subscriber and email tables belong to later, separately reviewed migrations.
+
+## Private admin
+
+The admin dashboard is available at `/admin` and is protected by a single password. Generate a password hash locally:
+
+```bash
+npm run auth:hash-password
+```
+
+Place the resulting hash in `ADMIN_PASSWORD_HASH` in the server's uncommitted `.env` file. The plaintext password is never stored. The production cookie is Secure, HttpOnly, SameSite=Strict, and host-only; terminate TLS before the container and forward requests to port 3000. Set `AUTH_COOKIE_SECURE=false` only when testing over local HTTP.
+
+Sessions are random, revocable tokens whose SHA-256 hashes are stored in SQLite. They expire after 12 hours. Login attempts are rate-limited and old sessions are cleaned up automatically. Changing the password hash does not automatically revoke existing sessions; delete rows from `admin_sessions` or rotate the database if immediate global sign-out is required.
