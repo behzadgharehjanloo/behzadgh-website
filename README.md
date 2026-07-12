@@ -17,13 +17,13 @@ npm run build
 
 ## Self-hosting
 
-The production image uses Next.js standalone output and Node.js 22. SQLite data is stored at `/app/data/behzad.sqlite` on the persistent `newsletter-data` Docker volume.
+The production architecture is Vercel Functions plus Neon Postgres. The optional production image uses Next.js standalone output and Node.js 22, but it connects to the same external Postgres database and does not store authoritative data inside the container.
 
 ```bash
 docker compose up --build -d
 ```
 
-The container runs pending database migrations before starting the website. Check readiness at `http://localhost:3000/api/health`.
+The container runs pending Postgres migrations before starting the website. Check readiness at `http://localhost:3000/api/health`.
 
 For local database setup, copy `.env.example` to `.env.local`, then run:
 
@@ -34,9 +34,9 @@ npm run db:check
 
 ### Backups
 
-Stop writes or use SQLite's online backup API before copying the database. Back up the database file from the persistent volume to storage outside the server, retain multiple dated copies, and periodically restore one into a temporary location and run `npm run db:check` against it. Never bake the live database into an image or commit it to Git.
+Enable Neon point-in-time restore or scheduled logical backups appropriate to the selected plan. Periodically test a restore into an isolated database. The production database URL must never be baked into an image or committed to Git.
 
-The database contains migration metadata and the private-admin authentication tables described below. Subscriber and email tables belong to later, separately reviewed migrations.
+The database contains migration metadata, private-admin authentication, subscribers, consent state, and the durable email outbox.
 
 ## Private admin
 
@@ -48,7 +48,7 @@ npm run auth:hash-password
 
 Place the resulting hash in `ADMIN_PASSWORD_HASH` in the server's uncommitted `.env` file. The plaintext password is never stored. The production cookie is Secure, HttpOnly, SameSite=Strict, and host-only; terminate TLS before the container and forward requests to port 3000. Set `AUTH_COOKIE_SECURE=false` only when testing over local HTTP.
 
-Sessions are random, revocable tokens whose SHA-256 hashes are stored in SQLite. They expire after 12 hours. Login attempts are rate-limited and old sessions are cleaned up automatically. Changing the password hash does not automatically revoke existing sessions; delete rows from `admin_sessions` or rotate the database if immediate global sign-out is required.
+Sessions are random, revocable tokens whose SHA-256 hashes are stored in Postgres. They expire after 12 hours. Login attempts are rate-limited and old sessions are cleaned up automatically. Changing the password hash does not automatically revoke existing sessions; delete rows from `admin_sessions` if immediate global sign-out is required.
 
 ## Subscribers
 
@@ -56,6 +56,6 @@ The public subscribe form stores normalized addresses as `pending` with consent 
 
 Each subscriber receives a random 256-bit unsubscribe token; only its SHA-256 hash is stored. The unsubscribe page requires explicit confirmation, while the endpoint also supports the exact RFC 8058 one-click POST body for future `List-Unsubscribe-Post` headers. GET requests never change subscription state, which prevents link scanners from unsubscribing recipients.
 
-Email is sent by a separate queue worker through the Gmail API using the narrow `gmail.send` OAuth scope and the fixed sender `still@behzadgh.com`. Failed deliveries remain queued with bounded exponential backoff and stop after eight attempts for manual review. Run `npm run email:check-format` to validate multipart MIME and required headers without sending anything.
+Email is processed by a `CRON_SECRET`-protected Vercel Cron route through the Gmail API using the narrow `gmail.send` OAuth scope and the fixed sender `still@behzadgh.com`. It runs for a bounded invocation and does not require a continuously running process. Failed deliveries remain in Postgres with bounded exponential backoff and stop after eight attempts for manual review. Run `npm run email:check-format` to validate multipart MIME and required headers without sending anything.
 
 See `GOOGLE_WORKSPACE_EMAIL_SETUP.md` for the required OAuth and DNS setup, authentication verification, and launch checklist.

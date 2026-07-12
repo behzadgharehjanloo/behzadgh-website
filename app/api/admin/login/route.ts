@@ -23,16 +23,16 @@ export async function POST(request: Request) {
   if (!process.env.ADMIN_PASSWORD_HASH) return redirectTo(request, "/admin/login?error=configuration");
 
   const clientKey = loginClientKey(request);
-  if (isLoginBlocked(clientKey)) return redirectTo(request, "/admin/login?error=invalid");
+  if (await isLoginBlocked(clientKey)) return redirectTo(request, "/admin/login?error=invalid");
 
   const form = await request.formData();
   const password = form.get("password");
   if (typeof password !== "string" || password.length > 1024 || !verifyAdminPassword(password)) {
-    recordFailedLogin(clientKey);
+    await recordFailedLogin(clientKey);
     return redirectTo(request, "/admin/login?error=invalid");
   }
 
-  clearLoginAttempts(clientKey);
-  await setAdminSessionCookie(createAdminSession());
+  await clearLoginAttempts(clientKey);
+  await setAdminSessionCookie(await createAdminSession());
   return redirectTo(request, "/admin");
 }

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function UnsubscribePage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const subscriber = subscriberForToken(token);
+  const subscriber = await subscriberForToken(token);
 
   return (
     <div className="mx-auto w-full max-w-lg px-5 pb-20 pt-16 sm:px-8">

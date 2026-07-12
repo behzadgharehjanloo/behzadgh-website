@@ -1,18 +1,16 @@
-import fs from "node:fs";
-import path from "node:path";
-import Database from "better-sqlite3";
+import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
 
-const databasePath = path.resolve(process.env.DATABASE_PATH ?? "./data/behzad.sqlite");
-let database: Database.Database | undefined;
+let client: NeonQueryFunction<false, false> | undefined;
 
 export function getDatabase() {
-  if (!database) {
-    fs.mkdirSync(path.dirname(databasePath), { recursive: true });
-    database = new Database(databasePath);
-    database.pragma("journal_mode = WAL");
-    database.pragma("foreign_keys = ON");
-    database.pragma("busy_timeout = 5000");
+  if (!client) {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error("DATABASE_URL is not configured");
+    client = neon(url);
   }
+  return client;
+}
 
-  return database;
+export async function query<T>(text: string, params: unknown[] = []) {
+  return (await getDatabase().query(text, params)) as T[];
 }

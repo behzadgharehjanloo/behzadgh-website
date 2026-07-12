@@ -80,6 +80,8 @@ Every future message must:
 
 ## SELF-HOSTING READINESS
 
+> **Architecture update (2026-07-12):** The production target was later confirmed as Vercel. The Docker/SQLite readiness notes below are historical audit findings, not the current production design. Production now uses Vercel Functions, secured Vercel Cron, and Neon Postgres as documented in `GOOGLE_WORKSPACE_EMAIL_SETUP.md`.
+
 - Next.js: declared as `^15.3.0`; the verified installed version is 15.5.19.
 - React / React DOM: declared as `^19.0.0`.
 - Routing: App Router (`app/` directory); no Pages Router.

@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { getDatabase } from "@/lib/database";
+import { query } from "@/lib/database";
 
 export const metadata: Metadata = {
   title: "Admin",
   robots: { index: false, follow: false }
 };
 
-type SubscriberRow = { id: number; email: string; status: string; created_at: number };
+type SubscriberRow = { id: string | number; email: string; status: string; created_at: string | number };
 
-export default function AdminPage() {
-  const database = getDatabase();
-  const counts = database.prepare("SELECT status, COUNT(*) AS count FROM subscribers GROUP BY status").all() as Array<{ status: string; count: number }>;
-  const latest = database.prepare("SELECT id, email, status, created_at FROM subscribers ORDER BY created_at DESC LIMIT 25").all() as SubscriberRow[];
+export default async function AdminPage() {
+  const [counts, latest] = await Promise.all([
+    query<{ status: string; count: number }>("SELECT status, COUNT(*)::int AS count FROM subscribers GROUP BY status"),
+    query<SubscriberRow>("SELECT id, email, status, created_at FROM subscribers ORDER BY created_at DESC LIMIT 25")
+  ]);
   const countFor = (status: string) => counts.find((item) => item.status === status)?.count ?? 0;
   return (
     <div className="mx-auto w-full max-w-3xl px-5 pb-20 pt-12 sm:px-8">
@@ -43,7 +44,7 @@ export default function AdminPage() {
             <table className="w-full border-collapse text-left text-sm">
               <thead><tr className="border-b border-line text-muted"><th className="py-3 pr-4 font-medium">Email</th><th className="py-3 pr-4 font-medium">Status</th><th className="py-3 font-medium">Requested</th></tr></thead>
               <tbody>{latest.map((subscriber) => (
-                <tr key={subscriber.id} className="border-b border-line/70"><td className="py-4 pr-4 text-ink">{subscriber.email}</td><td className="py-4 pr-4 capitalize text-muted">{subscriber.status}</td><td className="py-4 text-muted">{new Date(subscriber.created_at * 1000).toISOString().slice(0, 10)}</td></tr>
+                <tr key={subscriber.id} className="border-b border-line/70"><td className="py-4 pr-4 text-ink">{subscriber.email}</td><td className="py-4 pr-4 capitalize text-muted">{subscriber.status}</td><td className="py-4 text-muted">{new Date(Number(subscriber.created_at) * 1000).toISOString().slice(0, 10)}</td></tr>
               ))}</tbody>
             </table>
           </div>

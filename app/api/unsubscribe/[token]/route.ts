@@ -10,7 +10,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tok
   const oneClick = form.get("List-Unsubscribe") === "One-Click";
 
   if (!browserConfirmation && !oneClick) return new Response("Forbidden", { status: 403 });
-  unsubscribeByToken(token);
+  await unsubscribeByToken(token);
 
   if (oneClick) return new Response(null, { status: 204 });
   return Response.redirect(new URL(`/unsubscribe/${encodeURIComponent(token)}`, request.url), 303);

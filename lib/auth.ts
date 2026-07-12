@@ -1,7 +1,7 @@
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getDatabase } from "@/lib/database";
+import { query } from "@/lib/database";
 import { requestClientKey } from "@/lib/request-security";
 
 const SESSION_TTL_SECONDS = 12 * 60 * 60;
@@ -55,14 +55,14 @@ function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export function createAdminSession() {
+export async function createAdminSession() {
   const token = randomBytes(32).toString("base64url");
   const now = Math.floor(Date.now() / 1000);
-  const database = getDatabase();
-  database.prepare("DELETE FROM admin_sessions WHERE expires_at <= ?").run(now);
-  database.prepare(
-    "INSERT INTO admin_sessions (token_hash, created_at, expires_at, last_seen_at) VALUES (?, ?, ?, ?)"
-  ).run(hashToken(token), now, now + SESSION_TTL_SECONDS, now);
+  await query("DELETE FROM admin_sessions WHERE expires_at <= $1", [now]);
+  await query(
+    "INSERT INTO admin_sessions (token_hash, created_at, expires_at, last_seen_at) VALUES ($1, $2, $3, $4)",
+    [hashToken(token), now, now + SESSION_TTL_SECONDS, now]
+  );
   return token;
 }
 
@@ -81,7 +81,7 @@ export async function clearAdminSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (token) {
-    getDatabase().prepare("DELETE FROM admin_sessions WHERE token_hash = ?").run(hashToken(token));
+    await query("DELETE FROM admin_sessions WHERE token_hash = $1", [hashToken(token)]);
   }
   cookieStore.delete(SESSION_COOKIE);
 }
@@ -91,17 +91,18 @@ export async function isAdminAuthenticated() {
   if (!token) return false;
 
   const now = Math.floor(Date.now() / 1000);
-  const database = getDatabase();
-  const session = database.prepare(
-    "SELECT expires_at FROM admin_sessions WHERE token_hash = ?"
-  ).get(hashToken(token)) as { expires_at: number } | undefined;
+  const sessions = await query<{ expires_at: string | number }>(
+    "SELECT expires_at FROM admin_sessions WHERE token_hash = $1",
+    [hashToken(token)]
+  );
+  const session = sessions[0];
 
-  if (!session || session.expires_at <= now) {
-    if (session) database.prepare("DELETE FROM admin_sessions WHERE token_hash = ?").run(hashToken(token));
+  if (!session || Number(session.expires_at) <= now) {
+    if (session) await query("DELETE FROM admin_sessions WHERE token_hash = $1", [hashToken(token)]);
     return false;
   }
 
-  database.prepare("UPDATE admin_sessions SET last_seen_at = ? WHERE token_hash = ?").run(now, hashToken(token));
+  await query("UPDATE admin_sessions SET last_seen_at = $1 WHERE token_hash = $2", [now, hashToken(token)]);
   return true;
 }
 
@@ -113,36 +114,34 @@ export function loginClientKey(request: Request) {
   return requestClientKey(request);
 }
 
-export function isLoginBlocked(clientKey: string) {
+export async function isLoginBlocked(clientKey: string) {
   const now = Math.floor(Date.now() / 1000);
-  const row = getDatabase().prepare(
-    "SELECT blocked_until FROM admin_login_attempts WHERE client_key = ?"
-  ).get(clientKey) as { blocked_until: number | null } | undefined;
-  return Boolean(row?.blocked_until && row.blocked_until > now);
+  const rows = await query<{ blocked_until: string | number | null }>(
+    "SELECT blocked_until FROM admin_login_attempts WHERE client_key = $1",
+    [clientKey]
+  );
+  return Boolean(rows[0]?.blocked_until && Number(rows[0].blocked_until) > now);
 }
 
-export function recordFailedLogin(clientKey: string) {
+export async function recordFailedLogin(clientKey: string) {
   const now = Math.floor(Date.now() / 1000);
   const windowSeconds = 15 * 60;
-  const database = getDatabase();
-  database.prepare("DELETE FROM admin_login_attempts WHERE window_started_at <= ?").run(now - 24 * 60 * 60);
-  const row = database.prepare(
-    "SELECT window_started_at, attempts FROM admin_login_attempts WHERE client_key = ?"
-  ).get(clientKey) as { window_started_at: number; attempts: number } | undefined;
-
-  if (!row || row.window_started_at <= now - windowSeconds) {
-    database.prepare(
-      "INSERT INTO admin_login_attempts (client_key, window_started_at, attempts, blocked_until) VALUES (?, ?, 1, NULL) ON CONFLICT(client_key) DO UPDATE SET window_started_at = excluded.window_started_at, attempts = 1, blocked_until = NULL"
-    ).run(clientKey, now);
-    return;
-  }
-
-  const attempts = row.attempts + 1;
-  database.prepare(
-    "UPDATE admin_login_attempts SET attempts = ?, blocked_until = ? WHERE client_key = ?"
-  ).run(attempts, attempts >= 5 ? now + windowSeconds : null, clientKey);
+  await query("DELETE FROM admin_login_attempts WHERE window_started_at <= $1", [now - 24 * 60 * 60]);
+  await query(
+    `INSERT INTO admin_login_attempts (client_key, window_started_at, attempts, blocked_until)
+     VALUES ($1, $2, 1, NULL)
+     ON CONFLICT (client_key) DO UPDATE SET
+       attempts = CASE WHEN admin_login_attempts.window_started_at <= $3 THEN 1 ELSE admin_login_attempts.attempts + 1 END,
+       window_started_at = CASE WHEN admin_login_attempts.window_started_at <= $3 THEN $2 ELSE admin_login_attempts.window_started_at END,
+       blocked_until = CASE
+         WHEN admin_login_attempts.window_started_at <= $3 THEN NULL
+         WHEN admin_login_attempts.attempts + 1 >= 5 THEN $4
+         ELSE admin_login_attempts.blocked_until
+       END`,
+    [clientKey, now, now - windowSeconds, now + windowSeconds]
+  );
 }
 
-export function clearLoginAttempts(clientKey: string) {
-  getDatabase().prepare("DELETE FROM admin_login_attempts WHERE client_key = ?").run(clientKey);
+export async function clearLoginAttempts(clientKey: string) {
+  await query("DELETE FROM admin_login_attempts WHERE client_key = $1", [clientKey]);
 }

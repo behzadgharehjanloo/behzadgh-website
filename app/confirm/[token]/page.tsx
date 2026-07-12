@@ -16,7 +16,7 @@ export default async function ConfirmSubscriptionPage({
 }) {
   const { token } = await params;
   const { confirmed } = await searchParams;
-  const confirmation = confirmationForToken(token);
+  const confirmation = await confirmationForToken(token);
 
   return (
     <div className="mx-auto w-full max-w-lg px-5 pb-20 pt-16 sm:px-8">

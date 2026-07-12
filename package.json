@@ -14,17 +14,17 @@
     "db:check": "node scripts/check-db.mjs",
     "auth:hash-password": "node scripts/hash-password.mjs",
     "email:process": "node scripts/process-email-outbox.mjs",
-    "email:check-format": "node scripts/check-email-format.mjs"
+    "email:check-format": "node scripts/check-email-format.mjs",
+    "test": "node --test tests/*.test.mjs"
   },
   "dependencies": {
-    "better-sqlite3": "^12.11.1",
+    "@neondatabase/serverless": "^1.1.0",
     "next": "^15.3.0",
     "nodemailer": "^9.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^22.15.0",
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.0.0",

@@ -10,7 +10,7 @@ function redirectTo(request: Request, result: string) {
 
 export async function POST(request: Request) {
   if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
-  if (!subscriptionAllowed(requestClientKey(request))) return redirectTo(request, "limited");
+  if (!(await subscriptionAllowed(requestClientKey(request)))) return redirectTo(request, "limited");
 
   const form = await request.formData();
   if (form.get("website")) return redirectTo(request, "saved");
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   if (!email) return redirectTo(request, "invalid");
 
   try {
-    subscribe(email);
+    await subscribe(email);
   } catch {
     return redirectTo(request, "unavailable");
   }

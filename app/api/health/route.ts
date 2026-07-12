@@ -1,11 +1,11 @@
-import { getDatabase } from "@/lib/database";
+import { query } from "@/lib/database";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const result = getDatabase().prepare("SELECT 1 AS healthy").get() as { healthy: number };
+    const [result] = await query<{ healthy: number }>("SELECT 1 AS healthy");
 
     if (result.healthy !== 1) {
       throw new Error("Unexpected database response");
