@@ -52,10 +52,10 @@ Sessions are random, revocable tokens whose SHA-256 hashes are stored in Postgre
 
 ## Subscribers
 
-The public subscribe form stores normalized addresses as `pending` with consent time, source, and policy version, then queues a confirmation message. Duplicate requests receive the same generic response, suppressed addresses are never reactivated, and request throttling plus a honeypot reduce automated abuse. A subscriber becomes `active` only after explicitly confirming; that transition queues the welcome email.
+The public subscribe form normalizes the address and creates a unique `active` subscriber with consent time, source, and policy version. It then sends the Welcome Email synchronously through the Gmail API. A duplicate active address does not receive another Welcome Email. A previously unsubscribed address is moved only to `pending` and must explicitly reconfirm before reactivation.
 
 Each subscriber receives a random 256-bit unsubscribe token; only its SHA-256 hash is stored. The unsubscribe page requires explicit confirmation, while the endpoint also supports the exact RFC 8058 one-click POST body for future `List-Unsubscribe-Post` headers. GET requests never change subscription state, which prevents link scanners from unsubscribing recipients.
 
-Email is processed by a `CRON_SECRET`-protected Vercel Cron route through the Gmail API using the narrow `gmail.send` OAuth scope and the fixed sender `still@behzadgh.com`. It runs for a bounded invocation and does not require a continuously running process. Failed deliveries remain in Postgres with bounded exponential backoff and stop after eight attempts for manual review. Run `npm run email:check-format` to validate multipart MIME and required headers without sending anything.
+The initial Welcome Email does not depend on Cron. The subscription request reserves an outbox record, attempts immediate Gmail API delivery, and marks it sent. If Gmail delivery fails, the same record is released to the durable retry queue without exposing the failure. The `CRON_SECRET`-protected daily Vercel Cron route remains only for retries and future scheduled mail, so a Vercel Pro plan is not required for immediate Welcome Emails. Run `npm run email:check-format` to validate multipart MIME and required headers without sending anything.
 
 See `GOOGLE_WORKSPACE_EMAIL_SETUP.md` for the required OAuth and DNS setup, authentication verification, and launch checklist.

@@ -5,7 +5,7 @@ import { deriveEmailToken } from "../lib/email-tokens.mjs";
 
 test("Vercel Cron is configured for the secured outbox route", () => {
   const config = JSON.parse(fs.readFileSync("vercel.json", "utf8"));
-  assert.deepEqual(config.crons, [{ path: "/api/cron/email-outbox", schedule: "*/5 * * * *" }]);
+  assert.deepEqual(config.crons, [{ path: "/api/cron/email-outbox", schedule: "0 3 * * *" }]);
   const route = fs.readFileSync("app/api/cron/email-outbox/route.ts", "utf8");
   assert.match(route, /process\.env\.CRON_SECRET/);
   assert.match(route, /timingSafeEqual/);

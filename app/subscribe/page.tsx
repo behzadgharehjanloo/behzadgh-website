@@ -6,7 +6,9 @@ export const metadata: Metadata = {
 };
 
 const messages: Record<string, string> = {
-  saved: "If this address can be subscribed, a confirmation email will arrive shortly.",
+  saved: "You’re subscribed. Your welcome email is on its way.",
+  existing: "This address is already subscribed.",
+  confirm: "This address was previously unsubscribed. A confirmation email is required before it can be reactivated.",
   invalid: "Enter a valid email address.",
   limited: "Too many attempts were received. Please try again later.",
   unavailable: "Subscriptions are temporarily unavailable. Please try again later."
