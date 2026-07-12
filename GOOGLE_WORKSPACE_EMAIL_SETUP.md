@@ -1,5 +1,17 @@
 # Vercel + Google Workspace Production Setup
 
+## Do these steps in order
+
+1. In the Vercel project, open **Settings -> Git** and record the configured **Production Branch**. Merge this work into that branch before deploying.
+2. Open **Storage**, choose **Create Database**, select **Neon Postgres**, and connect it to the project for **Production**.
+3. In **Settings -> Environment Variables**, confirm the Neon integration supplied `DATABASE_URL` for Production. Never put its value in Git, screenshots, chat, or browser code.
+4. Add every application variable listed in Step 4 below, scoped to **Production**. Values marked secret must be entered only in Vercel's protected environment-variable form.
+5. Complete the Gmail OAuth procedure in Step 3 while signed in as `still@behzadgh.com`, then add the resulting `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REFRESH_TOKEN` to Vercel.
+6. In a trusted local shell, make `DATABASE_URL` available for that shell session without committing or printing it. Run `npm run db:migrate`, followed by `npm run db:check`.
+7. Run `npm test`, `npm run typecheck`, `npm run email:check-format`, and `npm run build`. These checks use test doubles and do not send real email.
+8. Push or merge into the configured Vercel Production Branch and deploy that commit. Confirm the deployment includes `vercel.json` and the once-daily `/api/cron/email-outbox` job.
+9. Only after the deployment and DNS/OAuth checks pass, perform the single controlled real-subscription test in Step 7 with an address you own.
+
 ## Production architecture
 
 The production website runs as Vercel Functions. It does not run a permanent Node.js process and does not use SQLite in production.
@@ -50,10 +62,13 @@ Generate these values locally. Never paste them into chat, issue trackers, sourc
 1. In Google Cloud Console, select the organization-owned project.
 2. Enable the Gmail API.
 3. Configure the OAuth consent screen as **Internal** when supported by the Workspace account.
-4. Create an OAuth client appropriate for a server-side web application.
-5. Request only `https://www.googleapis.com/auth/gmail.send`.
-6. Authorize while signed in as `still@behzadgh.com` and obtain an offline refresh token.
-7. Store the client ID, client secret, and refresh token directly in Vercel environment settings. Do not store the mailbox password.
+4. Create an OAuth client with application type **Web application**.
+5. Add this exact authorized redirect URI to that client: `https://developers.google.com/oauthplayground`.
+6. Open [Google OAuth 2.0 Playground](https://developers.google.com/oauthplayground/), open its settings (gear icon), enable **Use your own OAuth credentials**, and enter the new client ID and client secret. Do not save either value in a shared browser profile.
+7. In the scope field, enter only `https://www.googleapis.com/auth/gmail.send`, then choose **Authorize APIs**.
+8. Sign in as `still@behzadgh.com`, approve that single scope, and choose **Exchange authorization code for tokens**.
+9. Copy the returned refresh token directly into the Vercel Production variable `GOOGLE_REFRESH_TOKEN`. Also add the client ID and client secret to their corresponding Vercel variables. Do not paste any of these values into source files, chat, screenshots, or logs.
+10. Remove the credentials from the OAuth Playground settings when finished. The application uses the refresh token only on the server; it does not need the mailbox password.
 
 Official references:
 
