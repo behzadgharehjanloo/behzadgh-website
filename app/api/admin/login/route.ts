@@ -2,12 +2,12 @@ import {
   clearLoginAttempts,
   createAdminSession,
   isLoginBlocked,
-  isSameOriginPost,
   loginClientKey,
   recordFailedLogin,
   setAdminSessionCookie,
   verifyAdminPassword
 } from "@/lib/auth";
+import { isSameOriginPost } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 

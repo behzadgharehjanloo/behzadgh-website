@@ -2,6 +2,7 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypt
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getDatabase } from "@/lib/database";
+import { requestClientKey } from "@/lib/request-security";
 
 const SESSION_TTL_SECONDS = 12 * 60 * 60;
 const SESSION_COOKIE = process.env.AUTH_COOKIE_SECURE === "false" ? "admin_session" : "__Host-admin_session";
@@ -109,9 +110,7 @@ export async function requireAdmin() {
 }
 
 export function loginClientKey(request: Request) {
-  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  const userAgent = request.headers.get("user-agent") ?? "unknown";
-  return createHash("sha256").update(`${forwarded}\n${userAgent}`).digest("hex");
+  return requestClientKey(request);
 }
 
 export function isLoginBlocked(clientKey: string) {
@@ -146,23 +145,4 @@ export function recordFailedLogin(clientKey: string) {
 
 export function clearLoginAttempts(clientKey: string) {
   getDatabase().prepare("DELETE FROM admin_login_attempts WHERE client_key = ?").run(clientKey);
-}
-
-export function isSameOriginPost(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-
-  const fetchSite = request.headers.get("sec-fetch-site");
-  if (fetchSite && fetchSite !== "same-origin") return false;
-
-  try {
-    const originUrl = new URL(origin);
-    const expectedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim()
-      ?? request.headers.get("host");
-    const expectedProtocol = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim()
-      ?? new URL(request.url).protocol.replace(":", "");
-    return Boolean(expectedHost && originUrl.host === expectedHost && originUrl.protocol === `${expectedProtocol}:`);
-  } catch {
-    return false;
-  }
 }

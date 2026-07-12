@@ -1,4 +1,5 @@
-import { clearAdminSession, isSameOriginPost } from "@/lib/auth";
+import { clearAdminSession } from "@/lib/auth";
+import { isSameOriginPost } from "@/lib/request-security";
 
 export const runtime = "nodejs";
 

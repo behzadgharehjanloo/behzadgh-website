@@ -49,3 +49,9 @@ npm run auth:hash-password
 Place the resulting hash in `ADMIN_PASSWORD_HASH` in the server's uncommitted `.env` file. The plaintext password is never stored. The production cookie is Secure, HttpOnly, SameSite=Strict, and host-only; terminate TLS before the container and forward requests to port 3000. Set `AUTH_COOKIE_SECURE=false` only when testing over local HTTP.
 
 Sessions are random, revocable tokens whose SHA-256 hashes are stored in SQLite. They expire after 12 hours. Login attempts are rate-limited and old sessions are cleaned up automatically. Changing the password hash does not automatically revoke existing sessions; delete rows from `admin_sessions` or rotate the database if immediate global sign-out is required.
+
+## Subscribers
+
+The public subscribe form stores normalized addresses as `pending` with consent time, source, and policy version. It does not send email yet. Duplicate requests receive the same generic response, suppressed addresses are never reactivated, and request throttling plus a honeypot reduce automated abuse.
+
+Each subscriber receives a random 256-bit unsubscribe token; only its SHA-256 hash is stored. The unsubscribe page requires explicit confirmation, while the endpoint also supports the exact RFC 8058 one-click POST body for future `List-Unsubscribe-Post` headers. GET requests never change subscription state, which prevents link scanners from unsubscribing recipients.
