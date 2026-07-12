@@ -84,7 +84,7 @@ test("welcome design preserves exact copy and a secure unsubscribe URL", () => {
   try {
     const token = "C".repeat(43);
     const message = welcomeEmail(token);
-    for (const copy of [
+    const exactCopy = [
       "BEHZAD GHAREHJANLOO",
       "Welcome.",
       "We’re glad to have you with us.",
@@ -94,13 +94,20 @@ test("welcome design preserves exact copy and a secure unsubscribe URL", () => {
       "www.behzadgh.com",
       "We respect your inbox and our privacy.",
       "You can unsubscribe at any time."
-    ]) {
+    ];
+    const visibleHtml = message.html.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    for (const copy of exactCopy) {
       assert.ok(message.text.includes(copy), `plain-text copy missing: ${copy}`);
+      assert.ok(visibleHtml.includes(copy), `HTML copy missing: ${copy}`);
     }
     assert.equal(message.unsubscribeUrl, `https://behzadgh.com/unsubscribe/${token}`);
     assert.match(message.html, /#bd913d/);
+    assert.match(message.html, /#0b1d33/);
     assert.match(message.html, /Georgia/);
-    assert.match(message.html, new RegExp(message.unsubscribeUrl));
+    assert.match(message.html, /href="https:\/\/behzadgh\.com"/);
+    assert.match(message.html, new RegExp(`href="${message.unsubscribeUrl}"`));
+    assert.ok(fs.existsSync("app/unsubscribe/[token]/page.tsx"));
+    assert.ok(fs.existsSync("app/api/unsubscribe/[token]/route.ts"));
   } finally {
     if (previous === undefined) delete process.env.SITE_URL;
     else process.env.SITE_URL = previous;
