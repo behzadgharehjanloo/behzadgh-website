@@ -1,46 +1,42 @@
 import { NextResponse } from "next/server";
+import { query } from "@/lib/database";
+import { deliverImmediateWelcome } from "@/lib/immediate-welcome.mjs";
+import { isSameOriginPost, requestClientKey } from "@/lib/request-security";
+import { normalizeEmail, subscribe } from "@/lib/subscribers";
+import { subscriptionAllowed } from "@/lib/subscription-rate-limit";
 
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+function publicResult(outcome: string, status = 200) {
+  return NextResponse.json({ ok: status < 400, outcome }, { status });
+}
 
 export async function POST(request: Request) {
-  let email = "";
+  if (!isSameOriginPost(request)) return publicResult("forbidden", 403);
+  if (!(await subscriptionAllowed(requestClientKey(request)))) return publicResult("limited", 429);
 
+  let value: unknown;
   try {
     const body = (await request.json()) as { email?: unknown };
-    email = String(body.email || "").trim().toLowerCase();
+    value = body.email;
   } catch {
-    return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+    return publicResult("invalid", 400);
   }
 
-  if (!emailPattern.test(email)) {
-    return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
-  }
-
-  const kitApiKey = process.env.KIT_API_KEY || process.env.KIT_API_SECRET;
-  const kitFormId = process.env.KIT_FORM_ID;
-
-  if (!kitApiKey || !kitFormId) {
-    return NextResponse.json({ error: "Email signup is not configured yet." }, { status: 500 });
-  }
+  const email = typeof value === "string" ? normalizeEmail(value) : null;
+  if (!email) return publicResult("invalid", 400);
 
   try {
-    const kitResponse = await fetch(`https://api.convertkit.com/v3/forms/${kitFormId}/subscribe`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8"
-      },
-      body: JSON.stringify({
-        api_key: kitApiKey,
-        email
-      })
-    });
-
-    if (!kitResponse.ok) {
-      return NextResponse.json({ error: "We could not add you right now. Please try again." }, { status: 502 });
+    const result = await subscribe(email);
+    if (result?.outcome === "created") {
+      const delivery = await deliverImmediateWelcome(result, { query });
+      return NextResponse.json({ ok: true, outcome: "created", delivery });
     }
-
-    return NextResponse.json({ ok: true });
+    if (result?.outcome === "duplicate_active") return publicResult("duplicate_active");
+    if (result?.outcome === "confirmation_required") return publicResult("confirmation_required", 202);
+    return publicResult("unavailable", 503);
   } catch {
-    return NextResponse.json({ error: "We could not add you right now. Please try again." }, { status: 502 });
+    return publicResult("unavailable", 503);
   }
 }

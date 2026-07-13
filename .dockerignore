@@ -1,0 +1,11 @@
+.git
+.next
+node_modules
+data
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
+.env*.local
+npm-debug.log*
+dev-server.log

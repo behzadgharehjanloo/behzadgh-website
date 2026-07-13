@@ -1,0 +1,17 @@
+services:
+  website:
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:?Set ADMIN_PASSWORD_HASH in .env}
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
+      SITE_URL: ${SITE_URL:-https://behzadgh.com}
+      EMAIL_TOKEN_SECRET: ${EMAIL_TOKEN_SECRET:?Set EMAIL_TOKEN_SECRET in .env}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in .env}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in .env}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:?Set GOOGLE_REFRESH_TOKEN in .env}
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
