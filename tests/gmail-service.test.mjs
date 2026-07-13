@@ -1,6 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildRawMessage, sendWithGmailApi } from "../lib/gmail-service.mjs";
+import { buildRawMessage, refreshGmailAccessToken, sendWithGmailApi } from "../lib/gmail-service.mjs";
+
+test("Gmail service refreshes OAuth without invoking a Gmail API method", async () => {
+  let refreshes = 0;
+  const oauth = {
+    getAccessToken: async () => {
+      refreshes += 1;
+      return { token: "access-token-used-only-by-the-client" };
+    }
+  };
+  await refreshGmailAccessToken(oauth);
+  assert.equal(refreshes, 1);
+});
+
+test("Gmail service sanitizes OAuth refresh failures", async () => {
+  const oauth = {
+    getAccessToken: async () => { throw new Error("invalid_grant secret-token"); }
+  };
+  await assert.rejects(
+    refreshGmailAccessToken(oauth),
+    (error) => error.message === "Gmail OAuth refresh failed"
+  );
+});
 
 test("Gmail service sends URL-safe raw MIME through users.messages.send", async () => {
   let request;

@@ -23,7 +23,7 @@ test("production storage uses Postgres and not local SQLite", () => {
 
 test("server secret placeholders remain empty", () => {
   const example = fs.readFileSync(".env.example", "utf8");
-  for (const name of ["DATABASE_URL", "ADMIN_PASSWORD_HASH", "EMAIL_TOKEN_SECRET", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN", "CRON_SECRET"]) {
+  for (const name of ["DATABASE_URL", "ADMIN_PASSWORD_HASH", "EMAIL_TOKEN_SECRET", "GMAIL_DIAGNOSTIC_SECRET", "GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN", "CRON_SECRET"]) {
     assert.match(example, new RegExp(`^${name}=$`, "m"));
   }
   assert.doesNotMatch(example, /NEXT_PUBLIC_(?:GOOGLE|EMAIL|CRON|DATABASE|ADMIN)/);
