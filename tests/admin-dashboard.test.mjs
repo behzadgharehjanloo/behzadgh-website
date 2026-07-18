@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
+import { ADMIN_TIME_ZONE, formatAdminDate } from "../lib/admin-date-format.mjs";
 import {
   ADMIN_PAGE_SIZE,
   buildAudienceSnapshot,
@@ -22,6 +23,20 @@ import {
 import { adminCookiePolicy, adminSessionIsValid } from "../lib/admin-session-policy.mjs";
 
 const dashboardPage = () => fs.readFileSync("app/admin/(protected)/page.tsx", "utf8");
+
+test("admin dates use New York time with automatic daylight-saving abbreviations", () => {
+  assert.equal(ADMIN_TIME_ZONE, "America/New_York");
+  assert.equal(
+    formatAdminDate(Date.UTC(2026, 6, 18, 16, 38) / 1000),
+    "Jul 18, 2026 · 12:38 PM EDT"
+  );
+  assert.equal(
+    formatAdminDate(Date.UTC(2026, 0, 18, 17, 38) / 1000),
+    "Jan 18, 2026 · 12:38 PM EST"
+  );
+  assert.equal(formatAdminDate(null), "—");
+  assert.equal(formatAdminDate("invalid"), "—");
+});
 
 test("unauthenticated admin access is redirected server-side before analytics load", () => {
   const layout = fs.readFileSync("app/admin/(protected)/layout.tsx", "utf8");
@@ -296,13 +311,16 @@ test("CSV values are escaped and spreadsheet formulas are neutralized", () => {
   const csv = subscribersToCsv([{
     email: "reader@example.com",
     status: "active",
-    created_at: 0,
+    created_at: Date.UTC(2026, 6, 18, 16, 38) / 1000,
     consent_source: "website, form",
     welcome_sent_at: null,
     unsubscribed_at: null
   }]);
   assert.match(csv, /^"email","status","signup date","source","welcome sent date","unsubscribed date"\r\n/);
   assert.match(csv, /"website, form"/);
+  assert.match(csv, /"Jul 18, 2026 · 12:38 PM EDT"/);
+  assert.equal((csv.match(/"—"/g) ?? []).length, 2);
+  assert.doesNotMatch(csv, /2026-07-18T16:38:00\.000Z/);
   assert.doesNotMatch(csv, /undefined|null/);
 });
 
