@@ -3,9 +3,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { query } from "@/lib/database";
 import { requestClientKey } from "@/lib/request-security";
+import { adminCookiePolicy, adminSessionIsValid, SESSION_TTL_SECONDS } from "@/lib/admin-session-policy.mjs";
 
-const SESSION_TTL_SECONDS = 12 * 60 * 60;
-const SESSION_COOKIE = process.env.AUTH_COOKIE_SECURE === "false" ? "admin_session" : "__Host-admin_session";
+const { name: SESSION_COOKIE } = adminCookiePolicy();
 
 type PasswordHash = {
   N: number;
@@ -67,14 +67,8 @@ export async function createAdminSession() {
 }
 
 export async function setAdminSessionCookie(token: string) {
-  const secure = process.env.AUTH_COOKIE_SECURE !== "false";
-  (await cookies()).set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure,
-    sameSite: "strict",
-    path: "/",
-    maxAge: SESSION_TTL_SECONDS
-  });
+  const policy = adminCookiePolicy();
+  (await cookies()).set(policy.name, token, policy.options);
 }
 
 export async function clearAdminSession() {
@@ -97,7 +91,7 @@ export async function isAdminAuthenticated() {
   );
   const session = sessions[0];
 
-  if (!session || Number(session.expires_at) <= now) {
+  if (!session || !adminSessionIsValid(session.expires_at, now)) {
     if (session) await query("DELETE FROM admin_sessions WHERE token_hash = $1", [hashToken(token)]);
     return false;
   }
