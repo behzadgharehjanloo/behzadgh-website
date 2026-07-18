@@ -17,7 +17,8 @@ export async function GET(request: Request) {
   const filters = parseAdminFilters({
     page: "1",
     search: url.searchParams.get("search") ?? undefined,
-    status: url.searchParams.get("status") ?? undefined
+    status: url.searchParams.get("status") ?? undefined,
+    source: url.searchParams.get("source") ?? undefined
   });
   const rows = await loadAdminCsvRows(
     (text, params) => query<Record<string, unknown>>(text, params),
