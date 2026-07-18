@@ -232,9 +232,52 @@ test("email, status, and source filters are normalized and parameterized", () =>
 test("low-data editorial state and real first point remain in the dashboard", () => {
   const page = dashboardPage();
   assert.match(page, /You&apos;re just getting started/);
-  assert.match(page, /Your first subscriber joined on/);
-  assert.match(page, /<Chart points=\{dashboard\.growth\}/);
-  assert.match(page, /Zero-value dates are retained in calculations/);
+  assert.match(page, /First subscriber:/);
+  assert.match(page, /<SignupChart points=\{dashboard\.growth\}/);
+  assert.match(page, /<ActiveLineChart points=\{dashboard\.growth\}/);
+  assert.match(page, /Zero-value dates remain in calculations/);
+});
+
+test("low-data percentage metrics use a dash with a neutral explanation", () => {
+  const page = dashboardPage();
+  assert.match(page, /return value === null \? "—"/);
+  assert.match(page, /Growth rate this month[\s\S]*Not enough prior data/);
+  assert.doesNotMatch(page, /value === null \? "Not enough prior data"/);
+});
+
+test("private section navigation is accessible and contains no subscriber data", () => {
+  const navigation = fs.readFileSync("components/AdminSectionNav.tsx", "utf8");
+  const page = dashboardPage();
+  for (const id of ["overview", "growth", "velocity", "sources", "delivery", "activity", "subscribers", "milestones", "audience-snapshot"]) {
+    assert.match(navigation, new RegExp(`\\[?"${id}"|#\\$\\{id\\}`));
+    assert.match(page, new RegExp(`id="${id}"`));
+  }
+  assert.match(navigation, /aria-label="Dashboard sections"/);
+  assert.match(navigation, /aria-current=/);
+  assert.doesNotMatch(navigation, /email|subscriber\.email|loadAdminDashboard|fetch\(/i);
+  assert.doesNotMatch(fs.readFileSync("components/Header.tsx", "utf8"), /AdminSectionNav|\/admin/);
+});
+
+test("charts and source visualization use the real aggregated dashboard series", () => {
+  const page = dashboardPage();
+  assert.match(page, /function SignupChart\(\{ points \}/);
+  assert.match(page, /function ActiveLineChart\(\{ points \}/);
+  assert.match(page, /dashboard\.growth/);
+  assert.match(page, /function SourceDonut\(\{ sources \}/);
+  assert.match(page, /<SourceDonut sources=\{dashboard\.sources\}/);
+  assert.match(page, /role="img"/);
+  assert.match(page, /Accessible growth data/);
+  assert.doesNotMatch(page, /mock|hard-coded subscriber/i);
+});
+
+test("subscriber records retain accessible responsive table and mobile card views", () => {
+  const page = dashboardPage();
+  assert.match(page, /hidden overflow-x-auto[\s\S]*md:block/);
+  assert.match(page, /md:hidden/);
+  assert.match(page, /aria-label="Status"/);
+  assert.match(page, /aria-label="Source"/);
+  assert.match(page, /aria-label="Subscriber pagination"/);
+  assert.match(page, /dashboard\.subscribers\.map/);
 });
 
 test("CSV export is authenticated before subscriber data is queried", () => {
