@@ -81,10 +81,10 @@ function withFilters(filters: AdminFilters, overrides: Partial<Record<keyof Admi
   return suffix ? `/admin?${suffix}` : "/admin";
 }
 
-function exportHref(filters: AdminFilters) {
+function exportHref(filters: AdminFilters, format: "xlsx" | "csv") {
   const url = withFilters(filters, { page: 1 });
   const queryString = url.includes("?") ? url.slice(url.indexOf("?")) : "";
-  return `/api/admin/subscribers.csv${queryString}`;
+  return `/api/admin/subscribers.${format}${queryString}`;
 }
 
 function PanelHeading({ eyebrow, title, copy }: { eyebrow: string; title?: string; copy?: string }) {
@@ -268,7 +268,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </div>
             <div className="flex flex-wrap items-center gap-3 xl:justify-end">
               <p className="mr-1 text-[10px] text-muted">Last updated <time dateTime={asDate(overview.generatedAt)?.toISOString()}>{formatAdminDate(overview.generatedAt)}</time></p>
-              <Link href={exportHref(filters)} className="inline-flex min-h-10 items-center rounded-full border border-[#a67c35] bg-[#fffdf8] px-4 text-xs font-semibold text-[#0b1d33] transition hover:bg-[#f1e8da] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/40">Export CSV</Link>
+              <div className="inline-flex min-h-10 rounded-full border border-[#a67c35] bg-[#fffdf8] text-xs font-semibold text-[#0b1d33] shadow-sm">
+                <Link href={exportHref(filters, "xlsx")} className="inline-flex items-center rounded-l-full px-4 transition hover:bg-[#f1e8da] focus:z-10 focus:outline-none focus:ring-2 focus:ring-[#a67c35]/40">Export</Link>
+                <details className="group relative border-l border-[#d8c39d]">
+                  <summary aria-label="Choose export format" className="flex h-full min-h-10 cursor-pointer list-none items-center rounded-r-full px-3 transition hover:bg-[#f1e8da] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/40 [&::-webkit-details-marker]:hidden"><span aria-hidden="true" className="text-[9px] transition group-open:rotate-180">▼</span></summary>
+                  <div className="absolute right-0 z-30 mt-2 w-44 overflow-hidden rounded-lg border border-line bg-[#fffdf8] py-1 shadow-[0_12px_28px_rgba(11,29,51,0.14)]">
+                    <Link href={exportHref(filters, "xlsx")} className="block px-4 py-2.5 text-xs font-semibold text-[#0b1d33] hover:bg-[#f1e8da] focus:bg-[#f1e8da] focus:outline-none">Excel (.xlsx)</Link>
+                    <Link href={exportHref(filters, "csv")} className="block border-t border-line px-4 py-2.5 text-xs font-medium text-[#0b1d33] hover:bg-[#f1e8da] focus:bg-[#f1e8da] focus:outline-none">CSV</Link>
+                  </div>
+                </details>
+              </div>
               <form method="post" action="/api/admin/logout"><button type="submit" className="min-h-10 rounded-full px-3 text-xs font-medium text-muted underline transition hover:text-[#0b1d33] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/40">Sign out</button></form>
             </div>
           </header>

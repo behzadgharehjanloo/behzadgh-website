@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
-import { ADMIN_TIME_ZONE, formatAdminDate } from "../lib/admin-date-format.mjs";
+import ExcelJS from "exceljs";
+import { ADMIN_TIME_ZONE, formatAdminDate, formatAdminExcelDate } from "../lib/admin-date-format.mjs";
 import {
   ADMIN_PAGE_SIZE,
   buildAudienceSnapshot,
@@ -21,6 +22,7 @@ import {
   subscribersToCsv
 } from "../lib/admin-dashboard.mjs";
 import { adminCookiePolicy, adminSessionIsValid } from "../lib/admin-session-policy.mjs";
+import { subscribersToExcel } from "../lib/admin-excel.mjs";
 
 const dashboardPage = () => fs.readFileSync("app/admin/(protected)/page.tsx", "utf8");
 
@@ -36,6 +38,11 @@ test("admin dates use New York time with automatic daylight-saving abbreviations
   );
   assert.equal(formatAdminDate(null), "—");
   assert.equal(formatAdminDate("invalid"), "—");
+  assert.equal(
+    formatAdminExcelDate(Date.UTC(2026, 6, 18, 16, 38) / 1000),
+    "Jul 18, 2026, 12:38 PM EDT"
+  );
+  assert.equal(formatAdminExcelDate(null), "");
 });
 
 test("unauthenticated admin access is redirected server-side before analytics load", () => {
@@ -303,6 +310,66 @@ test("CSV export is authenticated before subscriber data is queried", () => {
   assert.match(route, /status: 401/);
   assert.match(route, /private, no-store/);
   assert.match(route, /source: url\.searchParams\.get\("source"\)/);
+});
+
+test("Excel export has the same authentication and shared query protection as CSV", () => {
+  const route = fs.readFileSync("app/api/admin/subscribers.xlsx/route.ts", "utf8");
+  const authIndex = route.indexOf("if (!(await isAdminAuthenticated()))");
+  const queryIndex = route.indexOf("const rows = await loadAdminCsvRows");
+  assert.ok(authIndex >= 0 && queryIndex >= 0 && authIndex < queryIndex);
+  assert.match(route, /status: 401/);
+  assert.match(route, /private, no-store/);
+  assert.match(route, /application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/);
+  assert.doesNotMatch(route, /SELECT\s|FROM subscribers/i);
+
+  const page = dashboardPage();
+  assert.match(page, /exportHref\(filters, "xlsx"\)/);
+  assert.match(page, /Excel \(\.xlsx\)/);
+  assert.match(page, />CSV</);
+});
+
+test("Excel workbook is presentation-ready and contains local text timestamps", async () => {
+  const output = await subscribersToExcel([
+    {
+      email: "reader@example.com",
+      status: "active",
+      created_at: Date.UTC(2026, 6, 18, 16, 38) / 1000,
+      consent_source: "website_form",
+      welcome_status: "sent",
+      welcome_sent_at: Date.UTC(2026, 6, 18, 16, 40) / 1000,
+      unsubscribed_at: null
+    },
+    {
+      email: "former@example.com",
+      status: "unsubscribed",
+      created_at: Date.UTC(2026, 0, 18, 17, 38) / 1000,
+      consent_source: "website_form",
+      welcome_status: "failed",
+      welcome_sent_at: null,
+      unsubscribed_at: Date.UTC(2026, 1, 1, 15, 0) / 1000
+    }
+  ]);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(output);
+  const worksheet = workbook.getWorksheet("Subscribers");
+  assert.ok(worksheet);
+  assert.ok(worksheet.getTable("SubscribersTable"));
+  assert.equal(worksheet.views[0]?.state, "frozen");
+  assert.equal(worksheet.views[0]?.ySplit, 1);
+  assert.deepEqual(worksheet.getRow(1).values.slice(1), [
+    "Email", "Status", "Signup date", "Source", "Welcome status", "Welcome sent", "Unsubscribed date"
+  ]);
+  assert.equal(worksheet.getCell("B2").value, "Active");
+  assert.equal(worksheet.getCell("E2").value, "Sent");
+  assert.equal(worksheet.getCell("B3").value, "Unsubscribed");
+  assert.equal(worksheet.getCell("E3").value, "Failed");
+  assert.equal(worksheet.getCell("C2").value, "Jul 18, 2026, 12:38 PM EDT");
+  assert.equal(worksheet.getCell("C3").value, "Jan 18, 2026, 12:38 PM EST");
+  assert.doesNotMatch(String(worksheet.getCell("C2").value), /T\d{2}:|·/);
+  assert.equal(worksheet.getCell("F3").value, null);
+  assert.equal(worksheet.getRow(1).font.bold, true);
+  assert.ok(worksheet.columns.every((column) => Number(column.width) >= 12));
+  assert.equal(worksheet.conditionalFormattings.length, 6);
 });
 
 test("CSV values are escaped and spreadsheet formulas are neutralized", () => {
