@@ -2,16 +2,22 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import ExcelJS from "exceljs";
-import { ADMIN_TIME_ZONE, formatAdminDate, formatAdminExcelDate } from "../lib/admin-date-format.mjs";
+import { ADMIN_TIME_ZONE, formatAdminCalendarDay, formatAdminDate, formatAdminExcelDate } from "../lib/admin-date-format.mjs";
 import {
   ADMIN_PAGE_SIZE,
+  REPORTING_TIME_ZONE,
   buildAudienceSnapshot,
+  buildGrowthPeriods,
   buildGrowthSeries,
+  calculateGrowthKpis,
+  calculateGrowthVelocity,
   calculateMilestones,
   calculateSourceShares,
   chooseGrowthRange,
   comparePeriods,
   csvEscape,
+  growthBucketSize,
+  growthQuery,
   loadAdminDashboard,
   normalizeDeliveryHealth,
   normalizeOverview,
@@ -43,6 +49,7 @@ test("admin dates use New York time with automatic daylight-saving abbreviations
     "Jul 18, 2026, 12:38 PM EDT"
   );
   assert.equal(formatAdminExcelDate(null), "");
+  assert.equal(formatAdminCalendarDay("2026-07-18"), "Jul 18, 2026");
 });
 
 test("unauthenticated admin access is redirected server-side before analytics load", () => {
@@ -126,24 +133,87 @@ test("zero denominators never produce misleading percentages", () => {
   assert.equal(overview.unsubscribeRate, null);
 });
 
-test("7, 30, 90, and all-time ranges are accepted and low data defaults to 7 days", () => {
-  for (const range of ["7", "30", "90", "all"]) assert.equal(parseAdminFilters({ range }).range, range);
-  assert.equal(parseAdminFilters({ range: "365" }).range, "auto");
+test("7, 30, 90, 1-year, and all-time ranges are accepted and low data defaults to 7 days", () => {
+  for (const range of ["7", "30", "90", "365", "all"]) assert.equal(parseAdminFilters({ range }).range, range);
   assert.equal(chooseGrowthRange("auto", { total: 1, trackingDays: 30 }), "7");
   assert.equal(chooseGrowthRange("auto", { total: 5, trackingDays: 20 }), "30");
   assert.equal(chooseGrowthRange("90", { total: 1, trackingDays: 1 }), "90");
+  assert.equal(parseAdminFilters({ range: "30", compare: "1" }).compare, true);
+  assert.equal(parseAdminFilters({ range: "30", compare: "false" }).compare, false);
 });
 
 test("cumulative active growth accounts for activations and unsubscribes", () => {
   assert.deepEqual(buildGrowthSeries([
-    { day: "2026-07-16", signups: 2, activations: 2, unsubscribes: 0 },
-    { day: "2026-07-17", signups: 1, activations: 1, unsubscribes: 1 },
-    { day: "2026-07-18", signups: 0, activations: 0, unsubscribes: 2 }
-  ], 5), [
-    { day: "2026-07-16", signups: 2, active: 7 },
-    { day: "2026-07-17", signups: 1, active: 7 },
-    { day: "2026-07-18", signups: 0, active: 5 }
+    { day: "2026-07-16", signups: 2, activations: 2, unsubscribes: 0, active: 7 },
+    { day: "2026-07-17", signups: 0, activations: 0, unsubscribes: 0, active: 7 },
+    { day: "2026-07-18", signups: 1, activations: 1, unsubscribes: 2, active: 6 }
+  ]), [
+    { day: "2026-07-16", startDay: "2026-07-16", signups: 2, activations: 2, unsubscribes: 0, netGrowth: 2, active: 7 },
+    { day: "2026-07-17", startDay: "2026-07-17", signups: 0, activations: 0, unsubscribes: 0, netGrowth: 0, active: 7 },
+    { day: "2026-07-18", startDay: "2026-07-18", signups: 1, activations: 1, unsubscribes: 2, netGrowth: -1, active: 6 }
   ]);
+});
+
+test("growth periods align previous data, retain empty dates, and choose readable buckets", () => {
+  const rows = [
+    { period: "previous", day: "2026-07-13", signups: 1, activations: 1, unsubscribes: 0, active: 3 },
+    { period: "previous", day: "2026-07-14", signups: 0, activations: 0, unsubscribes: 0, active: 3 },
+    { period: "current", day: "2026-07-15", signups: 0, activations: 0, unsubscribes: 0, active: 3 },
+    { period: "current", day: "2026-07-16", signups: 2, activations: 2, unsubscribes: 1, active: 4 }
+  ];
+  const periods = buildGrowthPeriods(rows, "7", 30);
+  assert.equal(periods.current.length, 2);
+  assert.equal(periods.previous.length, 2);
+  assert.equal(periods.current[0].signups, 0);
+  assert.equal(periods.current[0].netGrowth, 0);
+  assert.equal(periods.granularity, "daily");
+  assert.equal(growthBucketSize("365", 365), 7);
+  assert.equal(growthBucketSize("all", 800), 30);
+});
+
+test("selected-period KPIs and velocity use historical event totals", () => {
+  const daily = [
+    { day: "2026-07-16", signups: 1, activations: 1, unsubscribes: 0, active: 6, netGrowth: 1 },
+    { day: "2026-07-17", signups: 2, activations: 2, unsubscribes: 1, active: 7, netGrowth: 1 },
+    { day: "2026-07-18", signups: 1, activations: 1, unsubscribes: 0, active: 8, netGrowth: 1 }
+  ];
+  assert.deepEqual(calculateGrowthKpis(daily, 3), {
+    activeEnd: 8,
+    activeStart: 5,
+    netGrowth: 3,
+    growthRate: 60,
+    averageNetPerDay: 1
+  });
+  assert.deepEqual(calculateGrowthVelocity(daily), {
+    bestAcquisitionDay: { day: "2026-07-17", signups: 2, unsubscribes: 1 },
+    signupStreak: 3,
+    highestSevenDaySignups: 4,
+    unsubscribes: 1
+  });
+});
+
+test("growth query uses New York calendar boundaries and an immediately preceding equal period", () => {
+  const query = growthQuery(30);
+  const analytics = fs.readFileSync("lib/admin-dashboard.mjs", "utf8");
+  assert.equal(REPORTING_TIME_ZONE, "America/New_York");
+  assert.deepEqual(query.params, [30]);
+  assert.match(query.text, /timezone\('America\/New_York', NOW\(\)\)/);
+  assert.match(query.text, /today - \(\$1::int - 1\)/);
+  assert.match(query.text, /current_start - \(current_end - current_start\) AS previous_start/);
+  assert.match(query.text, /AT TIME ZONE 'America\/New_York'/);
+  assert.match(query.text, /generate_series/);
+  assert.match(analytics, /date_trunc\('day', local_now\) AT TIME ZONE '\$\{REPORTING_TIME_ZONE\}'/);
+});
+
+test("subscriber event migration backfills reliable history and records future lifecycle changes", () => {
+  const migration = fs.readFileSync("db/migrations/0004_subscriber_event_history.sql", "utf8");
+  assert.match(migration, /CREATE TABLE IF NOT EXISTS subscriber_events/);
+  assert.match(migration, /event_type IN \('activated', 'unsubscribed', 'suppressed'\)/);
+  assert.match(migration, /COALESCE\(confirmed_at, created_at\)/);
+  assert.match(migration, /WHERE status = 'unsubscribed' AND unsubscribed_at IS NOT NULL/);
+  assert.match(migration, /AFTER INSERT OR UPDATE OF status ON subscribers/);
+  assert.match(migration, /OLD\.status = 'active' AND NEW\.status = 'suppressed'/);
+  assert.match(migration, /UNIQUE \(subscriber_id, event_type, occurred_at\)/);
 });
 
 test("current and previous period comparisons preserve count and percentage change", () => {
@@ -223,7 +293,10 @@ test("dashboard pagination is server-side and never loads the full subscriber ta
     if (/SELECT event_type/.test(text)) return [];
     if (/ROW_NUMBER\(\) OVER/.test(text)) return [{ milestone: 1, achieved_at: 0 }, { milestone: 10, achieved_at: 10 }];
     if (/^SELECT COUNT\(\*\)::int AS count FROM subscribers s/.test(text)) return [{ count: 60 }];
-    if (/WITH limits AS/.test(text)) return [{ day: "2026-07-18", signups: 2, active: 50 }];
+    if (/WITH local_dates AS/.test(text)) return [
+      { period: "previous", day: "2026-07-17", signups: 1, activations: 1, unsubscribes: 0, active: 48 },
+      { period: "current", day: "2026-07-18", signups: 2, activations: 2, unsubscribes: 0, active: 50 }
+    ];
     if (/SELECT s\.id, s\.email/.test(text)) return [];
     throw new Error(`Unexpected query: ${text.slice(0, 80)}`);
   };
@@ -241,7 +314,7 @@ test("dashboard pagination is server-side and never loads the full subscriber ta
 
 test("email, status, and source filters are normalized and parameterized", () => {
   const filters = parseAdminFilters({ page: "-4", search: " Reader%_ ", status: "active", source: "website-subscribe-form" });
-  assert.deepEqual(filters, { page: 1, search: "reader%_", status: "active", source: "website-subscribe-form", range: "auto" });
+  assert.deepEqual(filters, { page: 1, search: "reader%_", status: "active", source: "website-subscribe-form", range: "auto", compare: false });
   const where = subscriberWhere(filters);
   assert.match(where.sql, /LOWER\(s\.email\) LIKE \$1/);
   assert.match(where.sql, /s\.status = \$2/);
@@ -253,11 +326,12 @@ test("email, status, and source filters are normalized and parameterized", () =>
 
 test("low-data editorial state and real first point remain in the dashboard", () => {
   const page = dashboardPage();
-  assert.match(page, /You&apos;re just getting started/);
-  assert.match(page, /First subscriber:/);
-  assert.match(page, /<SignupChart points=\{dashboard\.growth\}/);
-  assert.match(page, /<ActiveLineChart points=\{dashboard\.growth\}/);
-  assert.match(page, /Zero-value dates remain in calculations/);
+  const chart = fs.readFileSync("components/AdminGrowthChart.tsx", "utf8");
+  assert.match(page, /Early-stage audience/);
+  assert.match(page, /Tracking since/);
+  assert.match(page, /<AdminGrowthChart current=\{dashboard\.growth\}/);
+  assert.match(chart, /Zero-activity dates are retained/);
+  assert.match(chart, /showMarkers/);
 });
 
 test("low-data percentage metrics use a dash with a neutral explanation", () => {
@@ -282,13 +356,17 @@ test("private section navigation is accessible and contains no subscriber data",
 
 test("charts and source visualization use the real aggregated dashboard series", () => {
   const page = dashboardPage();
-  assert.match(page, /function SignupChart\(\{ points \}/);
-  assert.match(page, /function ActiveLineChart\(\{ points \}/);
+  const chart = fs.readFileSync("components/AdminGrowthChart.tsx", "utf8");
+  assert.doesNotMatch(page, /SignupChart|ActiveLineChart|New signups by day/);
+  assert.match(chart, /Active subscriber history/);
+  assert.match(chart, /Previous period|strokeDasharray/);
+  assert.match(chart, /onPointerMove|onFocus/);
   assert.match(page, /dashboard\.growth/);
   assert.match(page, /function SourceDonut\(\{ sources \}/);
   assert.match(page, /<SourceDonut sources=\{dashboard\.sources\}/);
-  assert.match(page, /role="img"/);
-  assert.match(page, /Accessible growth data/);
+  assert.match(chart, /role="img"/);
+  assert.match(chart, /Accessible growth data/);
+  assert.match(chart, /New signups[\s\S]*Unsubscribes[\s\S]*Net growth/);
   assert.doesNotMatch(page, /mock|hard-coded subscriber/i);
 });
 

@@ -1,6 +1,7 @@
 export const ADMIN_PAGE_SIZE: number;
 export const ADMIN_STATUSES: string[];
 export const ADMIN_RANGES: string[];
+export const REPORTING_TIME_ZONE: "America/New_York";
 export const AUDIENCE_MILESTONES: number[];
 
 export type AdminFilters = {
@@ -9,6 +10,7 @@ export type AdminFilters = {
   status: string;
   source: string;
   range: string;
+  compare: boolean;
 };
 
 export type AdminSubscriber = {
@@ -61,7 +63,15 @@ export type DeliveryHealth = {
 };
 
 export type SourceShare = { source: string; count: number; share: number };
-export type GrowthPoint = { day: string; signups: number; active: number };
+export type GrowthPoint = {
+  day: string;
+  startDay: string;
+  signups: number;
+  activations: number;
+  unsubscribes: number;
+  netGrowth: number;
+  active: number;
+};
 export type RecentActivity = { type: string; email: string; occurredAt: number };
 
 export function safePercent(numerator: unknown, denominator: unknown): number | null;
@@ -78,7 +88,30 @@ export function normalizeSubscriberSummary(row?: Record<string, unknown>, outbox
 export function normalizeDeliveryHealth(row?: Record<string, unknown>): DeliveryHealth;
 export function calculateSourceShares(rows?: Record<string, unknown>[]): SourceShare[];
 export function chooseGrowthRange(requestedRange: string, overview: Overview): string;
-export function buildGrowthSeries(rows?: Record<string, unknown>[], startingActive?: number): GrowthPoint[];
+export function growthBucketSize(range: string, trackingDays?: number): number;
+export function buildGrowthSeries(rows?: Record<string, unknown>[], bucketSize?: number): GrowthPoint[];
+export function buildGrowthPeriods(rows?: Record<string, unknown>[], range?: string, trackingDays?: number): {
+  current: GrowthPoint[];
+  previous: GrowthPoint[];
+  currentDaily: Record<string, unknown>[];
+  previousDaily: Record<string, unknown>[];
+  bucketSize: number;
+  granularity: "daily" | "weekly" | "monthly";
+};
+export function calculateGrowthKpis(points?: GrowthPoint[], periodDays?: number): {
+  activeEnd: number;
+  activeStart: number;
+  netGrowth: number;
+  growthRate: number | null;
+  averageNetPerDay: number;
+};
+export function calculateGrowthVelocity(dailyPoints?: Record<string, unknown>[]): {
+  bestAcquisitionDay: { day: string; signups: number; unsubscribes: number } | null;
+  signupStreak: number;
+  highestSevenDaySignups: number;
+  unsubscribes: number;
+};
+export function growthQuery(rangeDays: number | null): { text: string; params: Array<number | null> };
 export function normalizeRecentActivity(rows?: Record<string, unknown>[]): RecentActivity[];
 export function calculateMilestones(total: number, rows?: Record<string, unknown>[]): {
   milestones: Array<{ target: number; achieved: boolean; achievedAt: number | null }>;
@@ -103,15 +136,19 @@ export function loadAdminDashboard(
   delivery: DeliveryHealth;
   sources: SourceShare[];
   growth: GrowthPoint[];
+  previousGrowth: GrowthPoint[];
+  growthKpis: ReturnType<typeof calculateGrowthKpis>;
+  growthGranularity: "daily" | "weekly" | "monthly";
   recentActivity: RecentActivity[];
   milestones: ReturnType<typeof calculateMilestones>;
   audienceSnapshot: ReturnType<typeof buildAudienceSnapshot>;
-  velocity: { weekly: ReturnType<typeof comparePeriods>; monthly: ReturnType<typeof comparePeriods> };
+  velocity: ReturnType<typeof calculateGrowthVelocity>;
   subscribers: AdminSubscriber[];
   filteredCount: number;
   pageCount: number;
   page: number;
   selectedRange: string;
+  compareGrowth: boolean;
 }>;
 export function loadAdminCsvRows(
   query: (text: string, params?: unknown[]) => Promise<Record<string, unknown>[]>,

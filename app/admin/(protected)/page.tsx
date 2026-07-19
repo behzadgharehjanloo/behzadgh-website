@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AdminGrowthChart } from "@/components/AdminGrowthChart";
 import { AdminSectionNav } from "@/components/AdminSectionNav";
-import { formatAdminDate } from "@/lib/admin-date-format.mjs";
+import { formatAdminCalendarDay, formatAdminDate } from "@/lib/admin-date-format.mjs";
 import {
   ADMIN_RANGES,
   ADMIN_STATUSES,
   loadAdminDashboard,
   parseAdminFilters,
   type AdminFilters,
-  type GrowthPoint,
   type SourceShare
 } from "@/lib/admin-dashboard.mjs";
 import { requireAdmin } from "@/lib/auth";
@@ -68,7 +68,7 @@ function titleCase(value: string) {
   return value.replace(/_/g, " ").replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function withFilters(filters: AdminFilters, overrides: Partial<Record<keyof AdminFilters, string | number>>) {
+function withFilters(filters: AdminFilters, overrides: Partial<Record<keyof AdminFilters, string | number | boolean>>) {
   const next = { ...filters, ...overrides };
   const params = new URLSearchParams();
   if (next.search) params.set("search", String(next.search));
@@ -76,6 +76,7 @@ function withFilters(filters: AdminFilters, overrides: Partial<Record<keyof Admi
   if (next.source !== "all") params.set("source", String(next.source));
   const range = next.range === "auto" ? undefined : String(next.range);
   if (range) params.set("range", range);
+  if (next.compare) params.set("compare", "1");
   if (Number(next.page) > 1) params.set("page", String(next.page));
   const suffix = params.toString();
   return suffix ? `/admin?${suffix}` : "/admin";
@@ -104,80 +105,6 @@ function MetricCard({ label, value, note }: { label: string; value: string; note
       <p className="mt-2 font-serif text-[clamp(1.55rem,2.4vw,2.15rem)] leading-none text-[#0b1d33]">{value}</p>
       <p className="mt-2 text-[11px] leading-4 text-muted">{note}</p>
     </article>
-  );
-}
-
-function axisDates(points: GrowthPoint[]) {
-  return [points[0]?.day ?? "No data", points[Math.floor((points.length - 1) / 2)]?.day ?? "", points.at(-1)?.day ?? ""];
-}
-
-function SignupChart({ points }: { points: GrowthPoint[] }) {
-  const maximum = Math.max(1, ...points.map((point) => point.signups));
-  const minimumWidth = Math.max(420, points.length * 7);
-  const dates = axisDates(points);
-  return (
-    <figure aria-labelledby="signup-chart-title" className="min-w-0">
-      <figcaption id="signup-chart-title" className="text-xs font-semibold text-[#0b1d33]">New signups by day</figcaption>
-      <div className="mt-3 overflow-x-auto pb-1">
-        <div style={{ minWidth: `${minimumWidth}px` }}>
-          <div className="relative grid h-40 items-end gap-[2px] border-b border-[#cfc2b0]" style={{ gridTemplateColumns: `repeat(${Math.max(points.length, 1)}, minmax(3px, 1fr))` }}>
-            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 border-t border-[#e4dacd]" />
-            <span aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 border-t border-[#eee6dc]" />
-            {points.map((point) => {
-              const height = point.signups === 0 ? 2 : Math.max(5, (point.signups / maximum) * 100);
-              return (
-                <span
-                  key={point.day}
-                  tabIndex={point.signups > 0 ? 0 : -1}
-                  aria-label={`${point.day}: ${point.signups} new signup${point.signups === 1 ? "" : "s"}`}
-                  className="relative z-10 flex h-full items-end rounded-sm outline-none focus:ring-2 focus:ring-[#0b1d33] focus:ring-offset-1"
-                >
-                  <span className="block w-full rounded-t-[2px] bg-[#b68a3b]" style={{ height: `${height}%`, opacity: point.signups === 0 ? 0.15 : 0.9 }} />
-                </span>
-              );
-            })}
-          </div>
-          <div className="mt-2 flex justify-between text-[9px] uppercase tracking-[0.06em] text-muted"><span>{dates[0]}</span><span>{dates[1]}</span><span>{dates[2]}</span></div>
-        </div>
-      </div>
-    </figure>
-  );
-}
-
-function ActiveLineChart({ points }: { points: GrowthPoint[] }) {
-  const width = 640;
-  const height = 196;
-  const insetX = 18;
-  const insetY = 16;
-  const maximum = Math.max(1, ...points.map((point) => point.active));
-  const coordinates = points.map((point, index) => ({
-    ...point,
-    x: points.length <= 1 ? width / 2 : insetX + (index / (points.length - 1)) * (width - insetX * 2),
-    y: height - insetY - (point.active / maximum) * (height - insetY * 2)
-  }));
-  const path = coordinates.map((point, index) => `${index === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
-  const dates = axisDates(points);
-  return (
-    <figure aria-labelledby="active-chart-title" className="min-w-0">
-      <figcaption id="active-chart-title" className="text-xs font-semibold text-[#0b1d33]">Cumulative active subscribers</figcaption>
-      <div className="mt-3 overflow-x-auto pb-1">
-        <div className="min-w-[420px]">
-          <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`Cumulative active subscribers from ${dates[0]} to ${dates[2]}`} className="h-40 w-full overflow-visible border-b border-[#cfc2b0]">
-            {[0, 0.5, 1].map((ratio) => {
-              const y = height - insetY - ratio * (height - insetY * 2);
-              return <line key={ratio} x1={insetX} x2={width - insetX} y1={y} y2={y} stroke={ratio === 0 ? "#cfc2b0" : "#e4dacd"} strokeWidth="1" />;
-            })}
-            {path ? <path d={path} fill="none" stroke="#17304d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /> : null}
-            {coordinates.map((point) => (
-              <circle key={point.day} cx={point.x} cy={point.y} r={point.active ? 4 : 2.5} fill="#17304d" tabIndex={0} className="outline-none focus:stroke-[#b68a3b] focus:stroke-[5px]">
-                <title>{`${point.day}: ${point.active} active subscriber${point.active === 1 ? "" : "s"}`}</title>
-              </circle>
-            ))}
-          </svg>
-          <div className="mt-2 flex justify-between text-[9px] uppercase tracking-[0.06em] text-muted"><span>{dates[0]}</span><span>{dates[1]}</span><span>{dates[2]}</span></div>
-        </div>
-      </div>
-    </figure>
   );
 }
 
@@ -235,7 +162,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   const dashboard = await loadAdminDashboard((text, params) => query<Record<string, unknown>>(text, params), filters);
   const overview = dashboard.overview;
   const lowData = overview.total <= 2 || dashboard.growth.filter((point) => point.signups > 0).length <= 1;
-  const rangeLabels: Record<string, string> = { "7": "7D", "30": "30D", "90": "90D", all: "All time" };
+  const rangeLabels: Record<string, string> = { "7": "7D", "30": "30D", "90": "90D", "365": "1Y", all: "All" };
 
   const metrics = [
     ["Total subscribers", overview.total.toLocaleString(), overview.firstSubscriberAt ? `Tracking since ${formatAdminDate(overview.firstSubscriberAt)}` : "No subscribers yet"],
@@ -244,7 +171,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     ["Growth rate this month", formatPercent(overview.growthRateThisMonth, 1), overview.growthRateThisMonth === null ? "Not enough prior data" : "Based on audience at month start"],
     ["Welcome delivery rate", formatPercent(dashboard.delivery.deliveryRate, 1), dashboard.delivery.total ? `${dashboard.delivery.sent} of ${dashboard.delivery.total} welcome emails sent` : "No welcome deliveries yet"],
     ["Unsubscribe rate", formatPercent(overview.unsubscribeRate, 1), overview.total ? `${overview.unsubscribed} unsubscribed` : "No subscriber history yet"],
-    ["New today", overview.today.toLocaleString(), "Calendar day, UTC"],
+    ["New today", overview.today.toLocaleString(), "Calendar day, America/New_York"],
     ["New in last 7 days", overview.current7.toLocaleString(), comparisonText(overview.current7, overview.previous7, "previous 7 days")],
     ["New this month", overview.thisMonth.toLocaleString(), comparisonText(overview.thisMonth, overview.previousMonth, "previous month")],
     ["Welcome queued or failed", (dashboard.delivery.queued + dashboard.delivery.failed).toLocaleString(), dashboard.delivery.failed ? `${dashboard.delivery.failed} need attention` : "No failed welcome items"],
@@ -287,31 +214,36 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(([label, value, note]) => <MetricCard key={label} label={label} value={value} note={note} />)}</div>
           </section>
 
-          <div className="mt-5 grid items-stretch gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(310px,1fr)]">
+          <div className="mt-5 grid items-stretch gap-4">
             <section id="growth" aria-labelledby="growth-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div id="growth-heading"><PanelHeading eyebrow="Audience growth" copy="Daily signups and cumulative active subscribers." /></div>
-                <nav aria-label="Growth range" className="inline-flex w-fit shrink-0 gap-0.5 rounded-full border border-line bg-[#f3ece1] p-0.5">
-                  {ADMIN_RANGES.map((range) => <Link key={range} href={withFilters(filters, { range, page: 1 })} aria-current={dashboard.selectedRange === range ? "page" : undefined} className={`rounded-full px-3 py-1.5 text-[10px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#a67c35]/50 ${dashboard.selectedRange === range ? "bg-[#0b1d33] text-[#fffaf1]" : "text-muted hover:text-[#0b1d33]"}`}>{rangeLabels[range]}</Link>)}
-                </nav>
+                <div id="growth-heading"><PanelHeading eyebrow="Audience growth" copy={`Historical active audience · ${dashboard.growthGranularity} · America/New_York`} /></div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <nav aria-label="Growth range" className="inline-flex w-fit shrink-0 gap-0.5 rounded-full border border-line bg-[#f3ece1] p-0.5">
+                    {ADMIN_RANGES.map((range) => <Link key={range} href={withFilters(filters, { range, page: 1 })} aria-current={dashboard.selectedRange === range ? "page" : undefined} className={`rounded-full px-3 py-1.5 text-[10px] font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#a67c35]/50 ${dashboard.selectedRange === range ? "bg-[#0b1d33] text-[#fffaf1]" : "text-muted hover:text-[#0b1d33]"}`}>{rangeLabels[range]}</Link>)}
+                  </nav>
+                  <Link href={withFilters(filters, { compare: !dashboard.compareGrowth, page: 1 })} role="switch" aria-checked={dashboard.compareGrowth} className="inline-flex min-h-8 items-center gap-2 rounded-full border border-line bg-[#fffdf8] px-3 text-[10px] font-semibold text-[#0b1d33] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/50"><span aria-hidden="true" className={`relative h-4 w-7 rounded-full transition ${dashboard.compareGrowth ? "bg-[#17304d]" : "bg-[#d8cfc2]"}`}><span className={`absolute top-0.5 h-3 w-3 rounded-full bg-white shadow-sm transition ${dashboard.compareGrowth ? "left-3.5" : "left-0.5"}`} /></span>Compare previous period</Link>
+                </div>
               </div>
-              {lowData && overview.firstSubscriberAt ? <div className="mt-3 rounded-md border-l-2 border-[#a67c35] bg-[#f8f2e9] px-3 py-2"><p className="text-xs font-semibold text-[#0b1d33]">You&apos;re just getting started.</p><p className="mt-0.5 text-[10px] leading-4 text-muted">First subscriber: {formatAdminDate(overview.firstSubscriberAt)}. Trends will become more meaningful as the audience grows.</p></div> : null}
-              <div className="mt-5 grid gap-5 lg:grid-cols-2"><SignupChart points={dashboard.growth} /><ActiveLineChart points={dashboard.growth} /></div>
-              <details className="mt-4 rounded-md border border-line bg-[#f8f2e9] px-3 py-2 text-xs">
-                <summary className="cursor-pointer font-semibold text-[#0b1d33] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/40">Accessible growth data</summary>
-                <p className="mt-2 text-[10px] leading-4 text-muted">Zero-value dates remain in calculations. This view prioritizes dates with activity.</p>
-                <div className="mt-2 max-h-52 overflow-auto"><table className="w-full border-collapse text-left text-[10px]"><thead><tr className="border-b border-line"><th className="py-1.5 pr-4">Date</th><th className="py-1.5 pr-4">New</th><th className="py-1.5">Active</th></tr></thead><tbody>{dashboard.growth.filter((point, index, all) => point.signups > 0 || index === 0 || index === all.length - 1).map((point) => <tr key={point.day} className="border-b border-line/70"><td className="py-1.5 pr-4">{point.day}</td><td className="py-1.5 pr-4">{point.signups}</td><td className="py-1.5">{point.active}</td></tr>)}</tbody></table></div>
-              </details>
+              {lowData && overview.firstSubscriberAt ? <p className="mt-3 rounded-md border-l-2 border-[#a67c35] bg-[#f8f2e9] px-3 py-2 text-[10px] leading-4 text-muted"><span className="font-semibold text-[#0b1d33]">Early-stage audience.</span> Tracking since {formatAdminDate(overview.firstSubscriberAt)}; markers remain visible while history develops.</p> : null}
+              <dl className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-3"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Active at period end</dt><dd className="mt-1.5 font-serif text-2xl text-[#0b1d33]">{dashboard.growthKpis.activeEnd.toLocaleString()}</dd><p className="mt-1 text-[10px] text-muted">Started at {dashboard.growthKpis.activeStart.toLocaleString()}</p></div>
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-3"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Net growth</dt><dd className="mt-1.5 font-serif text-2xl text-[#0b1d33]">{signed(dashboard.growthKpis.netGrowth)}</dd><p className="mt-1 text-[10px] text-muted">Activations minus audience exits</p></div>
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-3"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Growth rate</dt><dd className="mt-1.5 font-serif text-2xl text-[#0b1d33]">{formatPercent(dashboard.growthKpis.growthRate, 1)}</dd><p className="mt-1 text-[10px] text-muted">Relative to period-opening audience</p></div>
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-3"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Average net growth / day</dt><dd className="mt-1.5 font-serif text-2xl text-[#0b1d33]">{signed(Number(dashboard.growthKpis.averageNetPerDay.toFixed(2)))}</dd><p className="mt-1 text-[10px] text-muted">Across every calendar day</p></div>
+              </dl>
+              <AdminGrowthChart current={dashboard.growth} previous={dashboard.previousGrowth} compare={dashboard.compareGrowth} granularity={dashboard.growthGranularity} />
             </section>
 
             <section id="velocity" aria-labelledby="velocity-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
-              <div id="velocity-heading"><PanelHeading eyebrow="Growth velocity" copy="Straight comparisons of subscriber acquisition." /></div>
-              <div className="mt-4 space-y-3">
-                {[["Seven-day pace", dashboard.velocity.weekly, "Current 7 days", "Previous 7 days"], ["Monthly pace", dashboard.velocity.monthly, "Current month", "Previous month"]].map(([title, comparison, currentLabel, previousLabel]) => {
-                  const item = comparison as typeof dashboard.velocity.weekly;
-                  return <article key={String(title)} className="rounded-lg border border-line bg-[#fbf8f2] p-4"><h3 className="text-xs font-semibold text-[#0b1d33]">{String(title)}</h3><dl className="mt-4 grid grid-cols-2 gap-4"><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">{String(currentLabel)}</dt><dd className="mt-1 font-serif text-2xl text-[#0b1d33]">{item.current}</dd></div><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">{String(previousLabel)}</dt><dd className="mt-1 font-serif text-2xl text-[#0b1d33]">{item.previous}</dd></div><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">Change</dt><dd className="mt-1 font-serif text-2xl text-[#0b1d33]">{signed(item.change)}</dd></div><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">Rate</dt><dd className="mt-1 font-serif text-2xl text-[#0b1d33]">{formatPercent(item.percentChange, 0)}</dd></div></dl>{item.current + item.previous < 5 ? <p className="mt-3 text-[10px] leading-4 text-muted">Not enough prior data for a durable trend.</p> : null}</article>;
-                })}
-              </div>
+              <div id="velocity-heading"><PanelHeading eyebrow="Growth velocity" copy="Complementary acquisition signals for the selected period." /></div>
+              <dl className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-4"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Best acquisition day</dt><dd className="mt-2 font-serif text-2xl text-[#0b1d33]">{dashboard.velocity.bestAcquisitionDay?.signups ?? "—"}</dd><p className="mt-1 text-[10px] text-muted">{dashboard.velocity.bestAcquisitionDay ? formatAdminCalendarDay(dashboard.velocity.bestAcquisitionDay.day) : "No signup activity yet"}</p></div>
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-4"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Current signup streak</dt><dd className="mt-2 font-serif text-2xl text-[#0b1d33]">{dashboard.velocity.signupStreak} day{dashboard.velocity.signupStreak === 1 ? "" : "s"}</dd><p className="mt-1 text-[10px] text-muted">Consecutive signup days through today</p></div>
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-4"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Highest seven-day signups</dt><dd className="mt-2 font-serif text-2xl text-[#0b1d33]">{dashboard.velocity.highestSevenDaySignups}</dd><p className="mt-1 text-[10px] text-muted">Best rolling window in this range</p></div>
+                <div className="rounded-lg border border-line bg-[#fbf8f2] p-4"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Audience exits</dt><dd className="mt-2 font-serif text-2xl text-[#0b1d33]">{dashboard.velocity.unsubscribes}</dd><p className="mt-1 text-[10px] text-muted">Unsubscribed or suppressed while active</p></div>
+              </dl>
+              {dashboard.growthKpis.activeEnd < 5 ? <p className="mt-3 text-[10px] leading-4 text-muted">More history is needed before directional forecasts would be responsible, so no projection is shown.</p> : null}
             </section>
           </div>
 
@@ -339,7 +271,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
           <section id="subscribers" aria-labelledby="subscribers-heading" className={`${panel} mt-4 scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div id="subscribers-heading"><PanelHeading eyebrow="Subscribers" copy={`${dashboard.filteredCount.toLocaleString()} matching record${dashboard.filteredCount === 1 ? "" : "s"}, newest first.`} /></div>
-              <form method="get" action="/admin" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_150px_190px_auto] lg:items-end"><input type="hidden" name="range" value={dashboard.selectedRange} /><label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Email starts with</span><input name="search" type="search" defaultValue={filters.search} placeholder="Search by email…" maxLength={254} autoComplete="off" className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none placeholder:text-muted focus:border-[#a67c35] focus:ring-2 focus:ring-[#a67c35]/20" /></label><label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Status</span><select name="status" aria-label="Status" defaultValue={filters.status} className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none focus:border-[#a67c35]"><option value="all">All statuses</option>{ADMIN_STATUSES.map((status) => <option key={status} value={status}>{titleCase(status)}</option>)}</select></label><label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Source</span><select name="source" aria-label="Source" defaultValue={filters.source} className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none focus:border-[#a67c35]"><option value="all">All sources</option>{dashboard.sources.map((source) => <option key={source.source} value={source.source}>{sourceLabel(source.source)}</option>)}</select></label><button type="submit" className="min-h-10 rounded-md bg-[#0b1d33] px-5 text-xs font-semibold text-[#fffaf1] transition hover:bg-[#17304d] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/50">Apply</button></form>
+              <form method="get" action="/admin" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_150px_190px_auto] lg:items-end"><input type="hidden" name="range" value={dashboard.selectedRange} />{filters.compare ? <input type="hidden" name="compare" value="1" /> : null}<label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Email starts with</span><input name="search" type="search" defaultValue={filters.search} placeholder="Search by email…" maxLength={254} autoComplete="off" className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none placeholder:text-muted focus:border-[#a67c35] focus:ring-2 focus:ring-[#a67c35]/20" /></label><label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Status</span><select name="status" aria-label="Status" defaultValue={filters.status} className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none focus:border-[#a67c35]"><option value="all">All statuses</option>{ADMIN_STATUSES.map((status) => <option key={status} value={status}>{titleCase(status)}</option>)}</select></label><label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Source</span><select name="source" aria-label="Source" defaultValue={filters.source} className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none focus:border-[#a67c35]"><option value="all">All sources</option>{dashboard.sources.map((source) => <option key={source.source} value={source.source}>{sourceLabel(source.source)}</option>)}</select></label><button type="submit" className="min-h-10 rounded-md bg-[#0b1d33] px-5 text-xs font-semibold text-[#fffaf1] transition hover:bg-[#17304d] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/50">Apply</button></form>
             </div>
             {dashboard.subscribers.length === 0 ? <div className="mt-4 rounded-lg border border-dashed border-line bg-[#fbf8f2] px-5 py-8 text-center"><p className="font-serif text-xl text-[#0b1d33]">No subscribers found.</p><p className="mt-1 text-xs text-muted">Adjust the email, status, or source filter.</p></div> : <><div className="mt-4 hidden overflow-x-auto rounded-lg border border-line md:block"><table className="w-full min-w-[1040px] border-collapse bg-[#fffdf8] text-left text-[10px]"><thead className="bg-[#eee5d8] text-[#0b1d33]"><tr>{["Email", "Joined", "Status", "Source", "Welcome status", "Welcome sent", "Unsubscribed"].map((heading) => <th key={heading} scope="col" className="px-3 py-2.5 font-semibold">{heading}</th>)}</tr></thead><tbody>{dashboard.subscribers.map((subscriber) => <tr key={subscriber.id} className="border-t border-line/80 align-top"><td className="max-w-[250px] break-all px-3 py-3 font-medium text-[#0b1d33]">{subscriber.email}</td><td className="whitespace-nowrap px-3 py-3 text-muted">{formatAdminDate(subscriber.created_at)}</td><td className="px-3 py-3"><span className="inline-flex rounded-full border border-[#b9cbae] bg-[#edf4e9] px-2 py-0.5 font-semibold capitalize text-[#315537]">{subscriber.status}</span></td><td className="px-3 py-3 text-muted">{sourceLabel(subscriber.consent_source)}</td><td className="px-3 py-3 capitalize text-muted">{titleCase(subscriber.welcome_status)}</td><td className="whitespace-nowrap px-3 py-3 text-muted">{formatAdminDate(subscriber.welcome_sent_at)}</td><td className="whitespace-nowrap px-3 py-3 text-muted">{formatAdminDate(subscriber.unsubscribed_at)}</td></tr>)}</tbody></table></div><div className="mt-4 grid gap-2 md:hidden">{dashboard.subscribers.map((subscriber) => <article key={subscriber.id} className="rounded-lg border border-line bg-[#fbf8f2] p-3"><div className="flex items-start justify-between gap-3"><p className="break-all text-xs font-semibold text-[#0b1d33]">{subscriber.email}</p><span className="rounded-full border border-[#b9cbae] bg-[#edf4e9] px-2 py-0.5 text-[9px] font-semibold capitalize text-[#315537]">{subscriber.status}</span></div><dl className="mt-3 grid grid-cols-2 gap-3 text-[10px]"><div><dt className="text-muted">Joined</dt><dd className="mt-0.5 text-[#0b1d33]">{formatAdminDate(subscriber.created_at)}</dd></div><div><dt className="text-muted">Source</dt><dd className="mt-0.5 text-[#0b1d33]">{sourceLabel(subscriber.consent_source)}</dd></div><div><dt className="text-muted">Welcome</dt><dd className="mt-0.5 text-[#0b1d33]">{titleCase(subscriber.welcome_status)}</dd></div><div><dt className="text-muted">Unsubscribed</dt><dd className="mt-0.5 text-[#0b1d33]">{formatAdminDate(subscriber.unsubscribed_at)}</dd></div></dl></article>)}</div></>}
             {dashboard.pageCount > 1 ? <nav aria-label="Subscriber pagination" className="mt-4 flex items-center justify-between gap-4 text-xs">{dashboard.page > 1 ? <Link href={withFilters(filters, { range: dashboard.selectedRange, page: dashboard.page - 1 })} className="font-medium text-[#0b1d33] underline">Previous</Link> : <span className="text-muted/60">Previous</span>}<span className="text-muted">Page {dashboard.page} of {dashboard.pageCount}</span>{dashboard.page < dashboard.pageCount ? <Link href={withFilters(filters, { range: dashboard.selectedRange, page: dashboard.page + 1 })} className="font-medium text-[#0b1d33] underline">Next</Link> : <span className="text-muted/60">Next</span>}</nav> : null}
