@@ -205,6 +205,14 @@ test("growth query uses New York calendar boundaries and an immediately precedin
   assert.match(analytics, /date_trunc\('day', local_now\) AT TIME ZONE '\$\{REPORTING_TIME_ZONE\}'/);
 });
 
+test("overview event aggregates use a one-row summary without correlated boundary subqueries", () => {
+  const analytics = fs.readFileSync("lib/admin-dashboard.mjs", "utf8");
+  assert.match(analytics, /event_summary AS \([\s\S]*FROM subscriber_events CROSS JOIN boundaries b/);
+  assert.match(analytics, /FROM people CROSS JOIN boundaries b CROSS JOIN event_summary e/);
+  assert.match(analytics, /GROUP BY e\.net_this_month, e\.net_previous_month, e\.net_30_days, e\.net_90_days, e\.active_at_month_start/);
+  assert.doesNotMatch(analytics, /\(SELECT SUM\([\s\S]*FROM subscriber_events WHERE occurred_at >= b\./);
+});
+
 test("subscriber event migration backfills reliable history and records future lifecycle changes", () => {
   const migration = fs.readFileSync("db/migrations/0004_subscriber_event_history.sql", "utf8");
   assert.match(migration, /CREATE TABLE IF NOT EXISTS subscriber_events/);
