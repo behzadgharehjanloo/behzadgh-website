@@ -80,7 +80,7 @@ export async function clearAdminSession() {
   cookieStore.delete(SESSION_COOKIE);
 }
 
-export async function isAdminAuthenticated() {
+export async function isAdminAuthenticated({ readOnly = false } = {}) {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return false;
 
@@ -92,12 +92,17 @@ export async function isAdminAuthenticated() {
   const session = sessions[0];
 
   if (!session || !adminSessionIsValid(session.expires_at, now)) {
-    if (session) await query("DELETE FROM admin_sessions WHERE token_hash = $1", [hashToken(token)]);
+    if (session && !readOnly) await query("DELETE FROM admin_sessions WHERE token_hash = $1", [hashToken(token)]);
     return false;
   }
 
-  await query("UPDATE admin_sessions SET last_seen_at = $1 WHERE token_hash = $2", [now, hashToken(token)]);
+  if (!readOnly) await query("UPDATE admin_sessions SET last_seen_at = $1 WHERE token_hash = $2", [now, hashToken(token)]);
   return true;
+}
+
+// Reuse the existing cookie, token hash and expiry policy without writes.
+export async function isAdminAuthenticatedReadOnly() {
+  return isAdminAuthenticated({ readOnly: true });
 }
 
 export async function requireAdmin() {
