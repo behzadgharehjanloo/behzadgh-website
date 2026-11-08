@@ -13,5 +13,6 @@ export default async function AdminDiagnosticsPage() {
     <Link href="/admin" className="text-sm font-semibold underline underline-offset-4 focus-visible:outline focus-visible:outline-2">← Admin dashboard</Link>
     <h1 className="mt-6 font-serif text-4xl">Diagnostics</h1>
     <AdminGmailDiagnostic />
+    <Link href="/admin/diagnostics/notes-test" className="mt-8 inline-block text-sm font-semibold underline underline-offset-4">Prepare one synthetic Notes test email</Link>
   </main>;
 }
