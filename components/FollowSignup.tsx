@@ -55,7 +55,7 @@ export function FollowSignup() {
       <div className="mt-10 border-y border-line py-8">
         <h2 className="font-serif text-[30px] font-medium leading-tight text-ink sm:text-[38px]">{needsConfirmation ? "Check your email." : "Welcome."}</h2>
         <div className="mt-5 max-w-[680px] space-y-3 text-[17px] leading-[1.7] text-muted sm:text-lg sm:leading-[1.68]">
-          <p>{needsConfirmation ? "We sent a confirmation request to your email address. Please open it and confirm your subscription." : "The next note will find you when it&rsquo;s ready."}</p>
+          <p>{needsConfirmation ? "Please check your inbox for a confirmation email and follow its link to reactivate your subscription." : "The next note will find you when it&rsquo;s ready."}</p>
           <p>Until then, you&rsquo;re welcome to explore earlier notes.</p>
           <p className="text-sm leading-6">
             Using Gmail? If your welcome email appears in Promotions, move it to Primary. If Gmail asks whether to do this for future messages from this sender, choose Yes. Gmail controls inbox categories, so this cannot be guaranteed for everyone.
