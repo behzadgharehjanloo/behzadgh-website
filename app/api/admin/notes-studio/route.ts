@@ -14,7 +14,7 @@ export async function POST(request:Request){
  try{if(!await isAdminAuthenticatedReadOnly())return json({error:'Sign in to Admin.'},401);}catch{return json({error:'Authentication unavailable.'},503);}
  if(!studioEnabled())return json({error:'Notes Studio requires the reviewed migration and Production feature flag.'},503);
  let body:Record<string,unknown>;
- try{const value=await boundedJson(request,35000);if(!value||typeof value!=='object'||Array.isArray(value))throw Error();body=value as Record<string,unknown>;}
+ try{const value=await boundedJson(request,220000);if(!value||typeof value!=='object'||Array.isArray(value))throw Error();body=value as Record<string,unknown>;}
  catch{return json({error:'Invalid or oversized request.'},400);}
  try{
   if(body.action==='save')return json({note:await saveStudioDraft(body.draft,body.id,body.revision)});
