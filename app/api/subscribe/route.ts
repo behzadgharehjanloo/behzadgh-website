@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/database";
 import { deliverImmediateWelcome } from "@/lib/immediate-welcome.mjs";
+import { deliverImmediateConfirmation } from "@/lib/immediate-confirmation.mjs";
 import { isSameOriginPost, requestClientKey } from "@/lib/request-security";
 import { normalizeEmail, subscribe } from "@/lib/subscribers";
 import { subscriptionAllowed } from "@/lib/subscription-rate-limit";
@@ -37,7 +38,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, outcome: "created", delivery });
     }
     if (result?.outcome === "duplicate_active") return publicResult("duplicate_active");
-    if (result?.outcome === "confirmation_required") return publicResult("confirmation_required", 202);
+    if (result?.outcome === "confirmation_required") {
+      await deliverImmediateConfirmation(result, { query });
+      return publicResult("confirmation_required", 202);
+    }
     return publicResult("unavailable", 503);
   } catch {
     return publicResult("unavailable", 503);
