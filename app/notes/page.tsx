@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { NoteList } from "@/components/NoteList";
 import { notes } from "@/lib/notes";
+import Link from "next/link";
+import {publishedStudioNotes} from "@/lib/notes-studio-public";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/notes" },
@@ -8,7 +10,9 @@ export const metadata: Metadata = {
   description: "Earlier notes from Behzad Gharehjanloo's personal writing project."
 };
 
-export default function NotesPage() {
+export const dynamic = "force-dynamic";
+export default async function NotesPage() {
+  const published=await publishedStudioNotes();
   return (
     <div className="mx-auto w-full max-w-5xl px-5 pb-20 pt-14 sm:px-8 md:pt-20 lg:px-10">
       <div className="max-w-3xl">
@@ -21,7 +25,7 @@ export default function NotesPage() {
         </p>
       </div>
       <div className="mt-10">
-        {notes.length > 0 ? <NoteList /> : (
+        {published.length > 0 ? <ul className="space-y-7">{published.map(note => <li key={note.slug} className="border-t border-line pt-6"><Link href={`/notes/${note.slug}`} className="font-serif text-3xl underline-offset-4 hover:underline">{note.title}</Link><p className="mt-3 text-sm text-muted">{new Date(note.published_at).toLocaleDateString("en-US",{month:"long",day:"numeric",year:"numeric"})}</p></li>)}</ul> : notes.length > 0 ? <NoteList /> : (
           <p className="border-t border-line pt-8 text-[17px] text-muted">The first notes will appear here when they are ready.</p>
         )}
       </div>

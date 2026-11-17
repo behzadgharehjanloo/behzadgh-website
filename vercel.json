@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/email-outbox",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/notes-studio",
+      "schedule": "0 3 * * *"
     }
   ]
 }
