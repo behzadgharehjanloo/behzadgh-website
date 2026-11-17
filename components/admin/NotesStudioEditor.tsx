@@ -1,6 +1,8 @@
 'use client';
 
 import {useMemo, useState} from 'react';
+import {StudioReadingPreview} from './notes/StudioReadingPreview';
+import {StudioEmailPreview} from './notes/StudioEmailPreview';
 
 type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string};
 type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string};
@@ -118,7 +120,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
     </section>
     <section className={panel+' min-w-0 p-5 md:p-7'}>
      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#e5daca] pb-5">
-      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 font-serif text-[26px] leading-tight">{selection?titleFor(selected??{...blank,id:'',image_alt:'',state:'draft',paused:false,revision:0,scheduled_at:null,published_at:null} as Note):'An unwritten Note'}</h3></div>
+      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 font-serif text-[26px] leading-tight">{selection?(selected?.title??draft.title):'An unwritten Note'}</h3></div>
       <span className="rounded-md bg-[#f3ede3] px-3 py-1.5 text-xs text-[#756b5e]">{selection?state.toUpperCase():'UNSAVED'}{dirty?' · Unsaved changes':''}</span>
      </div>
 
