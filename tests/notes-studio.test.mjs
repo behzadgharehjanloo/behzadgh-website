@@ -49,3 +49,14 @@ test('original local Editor, Website preview and Email preview are restored as l
  assert.match(migration,/ADD COLUMN narrator/);
  assert.doesNotMatch(migration,/DELETE FROM|DROP TABLE|UPDATE subscribers/);
 });
+
+test('original local editor protects unsaved text and keyboard preview tabs',()=>{
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ assert.match(editor,/beforeunload/);
+ assert.match(editor,/Unsaved changes will be lost/);
+ assert.match(editor,/ArrowRight/);
+ assert.match(editor,/ArrowLeft/);
+ assert.match(editor,/event.key==='Home'/);
+ assert.match(editor,/event.key==='End'/);
+ assert.match(editor,/tabIndex=\{editorTab===key\?0:-1\}/);
+});
