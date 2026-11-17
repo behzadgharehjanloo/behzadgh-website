@@ -14,6 +14,7 @@ const panel='rounded-xl border border-[#ded3c3] bg-[#fffdf9] shadow-[0_8px_28px_
 const displayDate=(value:string|null|undefined)=>value?new Date(value).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric',timeZone:'America/New_York'}):'—';
 const dateKey=(value:string)=>new Date(value).toLocaleDateString('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'America/New_York'});
 const titleFor=(note:Note)=>note.title||'Untitled Note';
+function slugFromTitle(title:string){return title.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,75).replace(/-$/,'');}
 function countWords(body:string){return body.trim()?body.trim().split(/\s+/).length:0;}
 function statusLabel(note:Note){return note.paused?'Paused':note.state[0].toUpperCase()+note.state.slice(1);}
 function Pill({note}:{note:Note}){return <span className={'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-medium '+(note.state==='published'?'border-[#bbcfbd] bg-[#eef4ee] text-[#3d654b]':note.state==='scheduled'?'border-[#dec69a] bg-[#fbf3e2] text-[#805f28]':'border-[#dfd7cb] bg-[#f5f0e8] text-[#675f53]')}>{statusLabel(note)}</span>;}
@@ -120,7 +121,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
       <span className="rounded-md bg-[#f3ede3] px-3 py-1.5 text-xs text-[#756b5e]">{selection?state.toUpperCase():'UNSAVED'}{dirty?' · Unsaved changes':''}</span>
      </div>
      <div className="mt-5 grid gap-5">
-      <label className="block text-xs font-semibold tracking-[0.02em]">Title<input className={field} maxLength={160} value={draft.title} disabled={!editable||busy} onChange={e=>edit('title',e.target.value)} placeholder="Give this Note a title"/></label>
+      <label className="block text-xs font-semibold tracking-[0.02em]">Title<input className={field} maxLength={160} value={draft.title} disabled={!editable||busy} onChange={e=>setDraft(v=>({...v,title:e.target.value,slug:(!v.slug||v.slug===slugFromTitle(v.title))?slugFromTitle(e.target.value):v.slug}))} placeholder="Give this Note a title"/></label>
       <label className="block text-xs font-semibold tracking-[0.02em]">The Note<textarea className={field+' min-h-[290px] resize-y font-serif text-[18px] font-normal leading-[1.75] md:min-h-[370px]'} rows={11} maxLength={15000} value={draft.body} disabled={!editable||busy} onChange={e=>edit('body',e.target.value)} placeholder="Write in your own voice. Paragraph breaks are kept exactly as written."/></label>
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#86796a]"><span>{countWords(draft.body)} words · {draft.body.length.toLocaleString()} characters</span><span>{dirty?'Not yet saved':'Saved version'}</span></div>
       <details className="rounded-lg border border-[#e3d8c8] bg-[#fcf9f3] px-4 py-3"><summary className="cursor-pointer text-sm font-medium">Advanced / URL &amp; SEO</summary>
@@ -143,7 +144,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
       <div className={'mx-auto mt-4 overflow-hidden rounded-lg border border-[#d9cfc1] bg-[#fffdf8] transition-all '+(device==='mobile'?'max-w-[390px]':'w-full')}>
        {previewMode==='email'?previewHtml?<iframe title="Private saved email preview" sandbox="" srcDoc={previewHtml} className="h-[570px] w-full"/>:<div className="p-8 text-sm">Preparing the email preview…</div>:
        <article className="mx-auto max-w-[710px] px-6 py-10 md:px-9">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#9c8155]">A NOTE FROM BEHZAD</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-[#9c8155]">EARLIER NOTES</p>
         <h4 className="mt-3 font-serif text-3xl font-normal leading-tight md:text-[42px]">{selected?.title??draft.title}</h4>
         <div className="mt-6 border-t border-[#d9cbb7] pt-7">{(selected?.body??draft.body).split(/\r?\n\s*\r?\n/).map((paragraph,i)=><p key={i} className="mb-5 whitespace-pre-wrap font-serif text-[18px] leading-[1.75]">{paragraph}</p>)}</div>
        </article>}
