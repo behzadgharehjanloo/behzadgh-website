@@ -5,6 +5,7 @@ import {renderStudioEmail} from './notes-email';
 
 export type StudioNote = {
  id:string;slug:string;title:string;body:string;image_alt:string;
+ narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;
  state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;
  scheduled_at:string|null;published_at:string|null;revision:number;
  created_at:string;updated_at:string;
@@ -23,8 +24,12 @@ export function validateDraft(value:unknown){
  const slug=typeof v.slug==='string'?v.slug.trim():'';
  const body=typeof v.body==='string'?v.body:'';
  const imageAlt=typeof v.imageAlt==='string'?v.imageAlt.trim():'';
- if(!title||title.length>160||!slug||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||!body.trim()||body.length>15000||imageAlt.length>250)throw new Error('A valid title, slug and authentic Note text are required.');
- return {title,slug,body,imageAlt};
+ const narrator=v.narrator==='Steven'?'Steven':'Behzad';
+ const excerpt=typeof v.excerpt==='string'?v.excerpt:'';
+ const imageCaption=typeof v.imageCaption==='string'?v.imageCaption:'';
+ const seoDescription=typeof v.seoDescription==='string'?v.seoDescription:'';
+ if(!title||title.length>160||!slug||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||!body.trim()||body.length>15000||imageAlt.length>250||excerpt.length>1000||imageCaption.length>1000||seoDescription.length>500)throw new Error('A valid title, slug and authentic Note text are required.');
+ return {title,slug,body,imageAlt,narrator,excerpt,imageCaption,seoDescription};
 }
 export async function listStudioNotes(){
  requireStudio();
@@ -39,13 +44,13 @@ export async function saveStudioDraft(input:unknown,id?:unknown,revision?:unknow
  requireStudio();const draft=validateDraft(input);
  if(typeof id==='string'&&/^[a-f0-9-]{36}$/i.test(id)){
   if(!Number.isInteger(revision))throw new Error('Revision is required.');
-  const rows=await query<StudioNote>(`UPDATE studio_notes SET slug=$2,title=$3,body=$4,image_alt=$5,revision=revision+1,updated_at=NOW()
-   WHERE id=$1 AND state='draft' AND revision=$6 RETURNING *`,[id,draft.slug,draft.title,draft.body,draft.imageAlt,revision]);
+  const rows=await query<StudioNote>(`UPDATE studio_notes SET slug=$2,title=$3,body=$4,image_alt=$5,narrator=$7,excerpt=$8,image_caption=$9,seo_description=$10,revision=revision+1,updated_at=NOW()
+   WHERE id=$1 AND state='draft' AND revision=$6 RETURNING *`,[id,draft.slug,draft.title,draft.body,draft.imageAlt,revision,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
   if(!rows.length)throw new Error('The draft changed or is no longer editable. Reload.');
   return rows[0];
  }
- const rows=await query<StudioNote>(`INSERT INTO studio_notes(id,slug,title,body,image_alt)
- VALUES($1,$2,$3,$4,$5) RETURNING *`,[randomUUID(),draft.slug,draft.title,draft.body,draft.imageAlt]);
+ const rows=await query<StudioNote>(`INSERT INTO studio_notes(id,slug,title,body,image_alt,narrator,excerpt,image_caption,seo_description)
+ VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,[randomUUID(),draft.slug,draft.title,draft.body,draft.imageAlt,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
  return rows[0];
 }
 export async function scheduleStudioNote(id:unknown,iso:unknown,revision:unknown){

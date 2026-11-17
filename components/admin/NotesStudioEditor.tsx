@@ -1,12 +1,14 @@
 'use client';
 
 import {useMemo, useState} from 'react';
+import {StudioReadingPreview} from './notes/StudioReadingPreview';
+import {StudioEmailPreview} from './notes/StudioEmailPreview';
 
-type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;created_at?:string;updated_at?:string};
-type Draft={slug:string;title:string;body:string;imageAlt:string};
+type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string};
+type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string};
 type View='notes'|'calendar'|'delivery';
 type Preview='website'|'email';
-const blank:Draft={slug:'',title:'',body:'',imageAlt:''};
+const blank:Draft={slug:'',title:'',body:'',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:''};
 const primary='inline-flex min-h-11 items-center justify-center rounded-md bg-[#172d42] px-5 py-2.5 text-sm font-medium text-[#fffdf8] transition hover:bg-[#29445b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b08a4c] disabled:cursor-not-allowed disabled:opacity-40';
 const secondary='inline-flex min-h-11 items-center justify-center rounded-md border border-[#d4c4aa] bg-[#fffdf8] px-4 py-2.5 text-sm font-medium text-[#172d42] transition hover:bg-[#f3ebdf] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b08a4c] disabled:cursor-not-allowed disabled:opacity-40';
 const field='mt-2 w-full rounded-md border border-[#d9cdbb] bg-[#fffefa] px-4 py-3 text-[15px] text-[#172d42] outline-none transition focus:border-[#9a753b] focus:ring-2 focus:ring-[#b99a68]/20 disabled:bg-[#f3efe7]';
@@ -36,6 +38,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const [paused,setPaused]=useState(false);
  const [search,setSearch]=useState('');
  const [previewMode,setPreviewMode]=useState<Preview>('website');
+ const [editorTab,setEditorTab]=useState<'edit'|'website'|'email'>('edit');
  const [device,setDevice]=useState<'desktop'|'mobile'>('desktop');
  const [previewHtml,setPreviewHtml]=useState('');
  const [previewOpen,setPreviewOpen]=useState(false);
@@ -53,20 +56,20 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  function guardUnsaved(){return !dirty||window.confirm('You have unsaved changes. Leave this draft without saving?');}
  function choose(n:Note){
   if(!guardUnsaved())return;
-  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt};
+  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);
-  setState(n.state);setPaused(n.paused);setPreviewOpen(false);setPreviewHtml('');
+  setState(n.state);setPaused(n.paused);setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');
   setScheduleDate(n.scheduled_at?new Date(n.scheduled_at).toLocaleString('sv-SE').replace(' ','T').slice(0,16):'');
   setTest(null);setMessage('');setView('notes');
  }
  function fresh(){
   if(!guardUnsaved())return;
   setSelection(null);setDraft(blank);setSaved(blank);setRevision(null);setState('draft');setPaused(false);
-  setPreviewOpen(false);setPreviewHtml('');setTest(null);setMessage('');setView('notes');
+  setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');setTest(null);setMessage('');setView('notes');
  }
  function incorporate(n:Note){
   setNotes(prev=>[n,...prev.filter(x=>x.id!==n.id)]);
-  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt};
+  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);setState(n.state);setPaused(n.paused);
   setTest(null);
  }
@@ -117,40 +120,50 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
     </section>
     <section className={panel+' min-w-0 p-5 md:p-7'}>
      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#e5daca] pb-5">
-      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 font-serif text-[26px] leading-tight">{selection?titleFor(selected??{...blank,id:'',image_alt:'',state:'draft',paused:false,revision:0,scheduled_at:null,published_at:null} as Note):'An unwritten Note'}</h3></div>
+      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 font-serif text-[26px] leading-tight">{selection?(selected?.title??draft.title):'An unwritten Note'}</h3></div>
       <span className="rounded-md bg-[#f3ede3] px-3 py-1.5 text-xs text-[#756b5e]">{selection?state.toUpperCase():'UNSAVED'}{dirty?' · Unsaved changes':''}</span>
      </div>
-     <div className="mt-5 grid gap-5">
-      <label className="block text-xs font-semibold tracking-[0.02em]">Title<input className={field} maxLength={160} value={draft.title} disabled={!editable||busy} onChange={e=>setDraft(v=>({...v,title:e.target.value,slug:(!v.slug||v.slug===slugFromTitle(v.title))?slugFromTitle(e.target.value):v.slug}))} placeholder="Give this Note a title"/></label>
-      <label className="block text-xs font-semibold tracking-[0.02em]">The Note<textarea className={field+' min-h-[290px] resize-y font-serif text-[18px] font-normal leading-[1.75] md:min-h-[370px]'} rows={11} maxLength={15000} value={draft.body} disabled={!editable||busy} onChange={e=>edit('body',e.target.value)} placeholder="Write in your own voice. Paragraph breaks are kept exactly as written."/></label>
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#86796a]"><span>{countWords(draft.body)} words · {draft.body.length.toLocaleString()} characters</span><span>{dirty?'Not yet saved':'Saved version'}</span></div>
-      <details className="rounded-lg border border-[#e3d8c8] bg-[#fcf9f3] px-4 py-3"><summary className="cursor-pointer text-sm font-medium">Advanced / URL &amp; SEO</summary>
-       <div className="mt-4 space-y-4"><label className="block text-xs font-semibold">Page URL slug<input className={field} value={draft.slug} disabled={!editable||busy} onChange={e=>edit('slug',e.target.value)} placeholder="my-note-title"/></label>
-       <p className="text-xs text-[#7e7469]">Use lowercase letters, numbers and hyphens. This becomes part of the public reading link after publication.</p>
-       <label className="block text-xs font-semibold">Photo description (for future image integration)<input className={field} maxLength={250} value={draft.imageAlt} disabled={!editable||busy} onChange={e=>edit('imageAlt',e.target.value)}/></label>
-       <p className="text-xs text-[#7e7469]">Photo upload is not yet available in this restored interface. Existing imagery is not changed.</p></div>
-      </details>
-      <div className="flex flex-wrap gap-2 border-t border-[#e5daca] pt-5">
-       <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{const x=await action({action:'save',id:selection,revision,draft});incorporate(x.note);setMessage('Draft saved with original text unchanged.');})}>Save draft</button>
-       <button type="button" className={secondary} disabled={!selection||busy} onClick={()=>run(async()=>{if(dirty){setMessage('Save your changes before previewing.');return;}const x=await action({action:'preview',id:selection});setPreviewHtml(x.html);setPreviewOpen(true);setPreviewMode('email');setMessage('Showing the saved email revision.');})}>Email Preview</button>
-       <button type="button" className={secondary} disabled={!selection||busy} onClick={()=>{if(dirty){setMessage('Save your changes before previewing.');return;}setPreviewOpen(true);setPreviewMode('website');setMessage('Showing the saved reading preview.');}}>Website Preview</button>
-      </div>
+
+     <div role="tablist" aria-label="Draft views" className="mt-6 flex flex-wrap gap-2 border-b border-[#ded1ba]">
+      {([['edit','Editor'],['website','Website preview'],['email','Email preview']] as const).map(([key,label])=><button key={key} type="button" role="tab" id={'studio-tab-'+key} aria-controls={'studio-panel-'+key} aria-selected={editorTab===key} onClick={()=>setEditorTab(key)} className={'min-h-11 rounded-t border border-b-0 px-4 py-2.5 text-[13px] font-semibold transition '+(editorTab===key?'border-[#17232c] bg-[#17232c] text-[#faf6ee]':'border-[#d5c7ae] bg-[#fffdf8] text-[#606364] hover:bg-[#f0e8da]')}>{label}</button>)}
      </div>
-     {previewOpen&&selection&&<div className="mt-7 rounded-lg border border-[#d9c9b1] bg-[#f5f0e7] p-3 md:p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-       <div className="flex gap-2"><button type="button" className={previewMode==='website'?primary:secondary} onClick={()=>setPreviewMode('website')}>Website</button><button type="button" className={previewMode==='email'?primary:secondary} onClick={()=>{setPreviewMode('email');if(!previewHtml)run(async()=>{const x=await action({action:'preview',id:selection});setPreviewHtml(x.html);});}}>Email</button></div>
-       <div className="flex gap-2 text-xs"><button className="underline underline-offset-4" onClick={()=>setDevice('desktop')}>Desktop</button><button className="underline underline-offset-4" onClick={()=>setDevice('mobile')}>Mobile</button><button className="ml-2 underline underline-offset-4" onClick={()=>setPreviewOpen(false)}>Close</button></div>
+     <section id="studio-panel-edit" role="tabpanel" aria-labelledby="studio-tab-edit" hidden={editorTab!=='edit'} className="pt-6">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(245px,1fr)]">
+       <div className="min-w-0 space-y-5">
+        <label className="block text-[13px] font-semibold">Title<input className={field} maxLength={160} value={draft.title} disabled={!editable||busy} onChange={e=>setDraft(v=>({...v,title:e.target.value,slug:(!v.slug||v.slug===slugFromTitle(v.title))?slugFromTitle(e.target.value):v.slug}))}/></label>
+        <label className="block text-[13px] font-semibold">Narrator<select className={field} value={draft.narrator} disabled={!editable||busy} onChange={e=>edit('narrator',e.target.value as 'Behzad'|'Steven')}><option value="Behzad">Behzad</option><option value="Steven">Steven</option></select></label>
+        <label className="block text-[13px] font-semibold">Exact Note text<p className="mt-2 text-xs font-normal leading-5 text-[#606364]">Your punctuation, spacing and line breaks are kept. No automatic editing or rewriting.</p><textarea className={field+' min-h-[365px] resize-y font-serif text-[19px] font-normal leading-[1.75]'} rows={15} maxLength={15000} spellCheck={false} autoCorrect="off" autoCapitalize="off" value={draft.body} disabled={!editable||busy} onChange={e=>edit('body',e.target.value)}/></label>
+        <p className="text-xs text-[#86796a]">{draft.body.length.toLocaleString()} characters · {countWords(draft.body)} words · {dirty?'Unsaved changes':'Saved draft'}</p>
+       </div>
+       <aside className="min-w-0 border-t border-[#ded1ba] pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+        <h4 className="font-serif text-2xl font-normal">Photograph</h4>
+        <p className="mt-2 text-xs leading-5 text-[#606364]">The original local editor supported photographs and framing. Upload is temporarily unavailable until its original storage pipeline is safely connected.</p>
+        <div className="mt-4 grid min-h-[185px] place-content-center border border-dashed border-[#cfc4b0] bg-[#faf6ee] p-5 text-center text-sm text-[#606364]">No photograph selected</div>
+        <label className="mt-5 block text-[13px] font-semibold">Choose photograph<input type="file" accept="image/jpeg,image/png" disabled className={field+' cursor-not-allowed opacity-50'}/></label>
+        <label className="mt-4 block text-[13px] font-semibold">Photograph alt text<textarea className={field} rows={3} maxLength={250} disabled={!editable||busy} value={draft.imageAlt} onChange={e=>edit('imageAlt',e.target.value)}/></label>
+        <p className="mt-1 text-xs leading-5 text-[#606364]">Used for accessibility and fallback text.</p>
+        <details className="mt-5 border-t border-[#ded1ba] pt-5"><summary className="min-h-11 cursor-pointer text-[13px] font-semibold">Advanced / SEO</summary>
+         <div className="mt-3 space-y-4">
+          <label className="block text-xs font-semibold">Page URL slug<input className={field} value={draft.slug} disabled={!editable||busy} onChange={e=>edit('slug',e.target.value)} placeholder="my-note-title"/></label>
+          <label className="block text-xs font-semibold">Caption (optional)<input className={field} value={draft.imageCaption} maxLength={1000} disabled={!editable||busy} onChange={e=>edit('imageCaption',e.target.value)}/></label>
+          <label className="block text-xs font-semibold">Archive excerpt<textarea className={field} rows={3} maxLength={1000} value={draft.excerpt} disabled={!editable||busy} onChange={e=>edit('excerpt',e.target.value)}/></label>
+          <label className="block text-xs font-semibold">Search description<textarea className={field} rows={3} maxLength={500} value={draft.seoDescription} disabled={!editable||busy} onChange={e=>edit('seoDescription',e.target.value)}/></label>
+         </div>
+        </details>
+       </aside>
       </div>
-      <div className={'mx-auto mt-4 overflow-hidden rounded-lg border border-[#d9cfc1] bg-[#fffdf8] transition-all '+(device==='mobile'?'max-w-[390px]':'w-full')}>
-       {previewMode==='email'?previewHtml?<iframe title="Private saved email preview" sandbox="" srcDoc={previewHtml} className="h-[570px] w-full"/>:<div className="p-8 text-sm">Preparing the email preview…</div>:
-       <article className="mx-auto max-w-[710px] px-6 py-10 md:px-9">
-        <p className="text-[10px] uppercase tracking-[0.2em] text-[#9c8155]">EARLIER NOTES</p>
-        <h4 className="mt-3 font-serif text-3xl font-normal leading-tight md:text-[42px]">{selected?.title??draft.title}</h4>
-        <div className="mt-6 border-t border-[#d9cbb7] pt-7">{(selected?.body??draft.body).split(/\r?\n\s*\r?\n/).map((paragraph,i)=><p key={i} className="mb-5 whitespace-pre-wrap font-serif text-[18px] leading-[1.75]">{paragraph}</p>)}</div>
-       </article>}
+      <div className="mt-7 flex flex-wrap gap-3 border-t border-[#ded1ba] pt-5">
+       <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{const x=await action({action:'save',id:selection,revision,draft});incorporate(x.note);setMessage('Private revision saved. No publication or email sent.');})}>{busy?'Saving…':'Save private draft'}</button>
       </div>
-      <p className="mt-3 text-[11px] text-[#817669]">Private preview only. This is not a publication or a real recipient email.</p>
-     </div>}
+     </section>
+     <section id="studio-panel-website" role="tabpanel" aria-labelledby="studio-tab-website" hidden={editorTab!=='website'} className="pt-6">
+      <p className="mb-4 text-xs leading-5 text-[#606364]">Current editor text, including unsaved changes. Private preview only.</p>
+      <StudioReadingPreview draft={draft}/>
+     </section>
+     <section id="studio-panel-email" role="tabpanel" aria-labelledby="studio-tab-email" hidden={editorTab!=='email'} className="pt-6">
+      <p className="mb-4 text-xs leading-5 text-[#606364]">Current editor text, including unsaved changes. No email is sent from this preview.</p>
+      <StudioEmailPreview draft={draft}/>
+     </section>
      {selection&&editable&&<details className="mt-7 border-t border-[#e5daca] pt-5"><summary className="cursor-pointer font-serif text-xl">Send a test email</summary>
        <p className="mt-3 text-xs text-[#786e61]">One manually entered recipient. Test delivery requires reviewing the exact address and a second confirmation.</p>
        <label className="mt-4 block text-xs font-semibold">Test recipient<input type="email" className={field} value={testEmail} onChange={e=>{setTestEmail(e.target.value);setTest(null);}} disabled={busy} placeholder="your-test-email@example.com"/></label>

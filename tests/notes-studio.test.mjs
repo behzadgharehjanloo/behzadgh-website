@@ -15,7 +15,7 @@ test('Studio cannot run from Preview, development, or with missing Production op
 });
 test('Note validator requires authentic nonempty content and rejects bad slugs',()=>{
  assert.deepEqual(JSON.parse(JSON.stringify(studio.validateDraft({slug:'my-note',title:' The Window ',body:'A real paragraph.\n\nAnother.',imageAlt:''}))),
- {slug:'my-note',title:'The Window',body:'A real paragraph.\n\nAnother.',imageAlt:''});
+ {slug:'my-note',title:'The Window',body:'A real paragraph.\n\nAnother.',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:''});
  for(const draft of [
   {slug:'My-Note',title:'Okay',body:'Original'},
   {slug:'valid',title:'',body:'Original'},
@@ -35,4 +35,17 @@ test('New campaign tables are isolated from existing subscriber and welcome flow
  const cron=fs.readFileSync('app/api/cron/notes-studio/route.ts','utf8');
  assert.match(cron,/CRON_SECRET/);
  assert.match(cron,/!studioEnabled\(\)/);
+});
+
+test('original local Editor, Website preview and Email preview are restored as live tabs',()=>{
+ const component=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ for(const tab of ['Editor','Website preview','Email preview'])assert.ok(component.includes(tab));
+ assert.match(component,/StudioReadingPreview draft=\{draft\}/);
+ assert.match(component,/StudioEmailPreview draft=\{draft\}/);
+ assert.match(component,/Narrator/);
+ assert.match(component,/Advanced \/ SEO/);
+ assert.match(component,/disabled=\{editorTab!=='edit'\}|hidden=\{editorTab!=='edit'\}/);
+ const migration=fs.readFileSync('db/notes-studio-migrations/0002_original_editor_fields.sql','utf8');
+ assert.match(migration,/ADD COLUMN narrator/);
+ assert.doesNotMatch(migration,/DELETE FROM|DROP TABLE|UPDATE subscribers/);
 });
