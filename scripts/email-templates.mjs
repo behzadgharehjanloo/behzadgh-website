@@ -23,7 +23,7 @@ export function welcomeEmail(unsubscribeToken) {
   const siteUrl = cleanSiteUrl();
   const unsubscribeUrl = `${siteUrl}/unsubscribe/${encodeURIComponent(unsubscribeToken)}`;
   return {
-    subject: "Welcome.",
+    subject: "A welcome note from Behzad",
     text: `BEHZAD GHAREHJANLOO\n\nWelcome.\n\nWe’re glad to have you with us.\n\nIn future emails, we’ll share glimpses behind the scenes, moments of inspiration, and thoughtful reflections.\n\nYour privacy is important to us and will always be protected.\n\nBehzad Gharehjanloo\nwww.behzadgh.com\n\nWe respect your inbox and our privacy.\nYou can unsubscribe at any time.\n${unsubscribeUrl}`,
     html: `<!doctype html>
 <html lang="en">
