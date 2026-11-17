@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { FollowSignup } from "@/components/FollowSignup";
+import { signupGeographyCollectionEnabled } from "@/lib/signup-geography-server";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Follow",
@@ -18,7 +21,7 @@ export default function SubscribePage() {
         <p>You&rsquo;ll receive new notes when they are written.</p>
         <p>If you&rsquo;d like to explore what came before, you&rsquo;ll also have access to earlier notes.</p>
       </div>
-      <FollowSignup />
+      <FollowSignup geographyDisclosure={signupGeographyCollectionEnabled()} />
     </div>
   );
 }

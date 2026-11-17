@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { query } from "@/lib/database";
 import { deriveEmailToken, emailTokenSecretConfigured } from "@/lib/email-tokens.mjs";
+import { normalizeSignupGeography, type SignupGeography } from "@/lib/signup-geography";
 export { normalizeEmail } from "@/lib/email-address.mjs";
 
 const CONSENT_VERSION = "newsletter-v1";
@@ -14,7 +15,7 @@ function nonce() {
   return randomBytes(18).toString("base64url");
 }
 
-export async function subscribe(email: string) {
+export async function subscribe(email: string, geography?: SignupGeography) {
   if (!emailTokenSecretConfigured()) throw new Error("Email token configuration is unavailable");
   const now = Math.floor(Date.now() / 1000);
   const confirmationExpiry = now + 7 * 24 * 60 * 60;
@@ -24,10 +25,12 @@ export async function subscribe(email: string) {
   const confirmationHash = hashUnsubscribeToken(deriveEmailToken("confirm", email, confirmationNonce));
   const workerId = randomUUID();
 
+  const location = geography === undefined ? undefined : normalizeSignupGeography(geography.country, geography.region?.split("-").slice(1).join("-"));
+
   const inserted = await query<{ id: string | number; outbox_id: string | number }>(
     `WITH inserted AS (
-       INSERT INTO subscribers (email, status, unsubscribe_token_hash, consented_at, consent_source, consent_version, created_at, updated_at, unsubscribe_nonce, confirmation_nonce, confirmation_token_hash, confirmation_expires_at, confirmed_at)
-       VALUES ($1, 'active', $2, $3, 'website-subscribe-form', $4, $3, $3, $5, NULL, NULL, NULL, $3)
+       INSERT INTO subscribers (email, status, unsubscribe_token_hash, consented_at, consent_source, consent_version, created_at, updated_at, unsubscribe_nonce, confirmation_nonce, confirmation_token_hash, confirmation_expires_at, confirmed_at${location ? ", signup_country, signup_region" : ""})
+       VALUES ($1, 'active', $2, $3, 'website-subscribe-form', $4, $3, $3, $5, NULL, NULL, NULL, $3${location ? ", $7, $8" : ""})
        ON CONFLICT (email) DO NOTHING
        RETURNING id
      ), claimed AS (
@@ -37,7 +40,7 @@ export async function subscribe(email: string) {
        RETURNING id, subscriber_id
      )
      SELECT inserted.id, claimed.id AS outbox_id FROM inserted JOIN claimed ON claimed.subscriber_id = inserted.id`,
-    [email, unsubscribeHash, now, CONSENT_VERSION, unsubscribeNonce, workerId]
+    [email, unsubscribeHash, now, CONSENT_VERSION, unsubscribeNonce, workerId, ...(location ? [location.country, location.region] : [])]
   );
   if (inserted.length) {
     return {

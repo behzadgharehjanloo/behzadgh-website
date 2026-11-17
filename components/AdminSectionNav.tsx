@@ -11,28 +11,26 @@ const sections = [
   ["activity", "Activity"],
   ["subscribers", "Subscribers"],
   ["milestones", "Milestones"],
-  ["audience-snapshot", "Audience snapshot"]
+  ["audience-snapshot", "Audience snapshot"],
+  ["global-audience", "Global Audience"]
 ] as const;
 
 export function AdminSectionNav() {
   const [active, setActive] = useState<(typeof sections)[number][0]>("overview");
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-        if (visible?.target.id) setActive(visible.target.id as (typeof sections)[number][0]);
-      },
-      { rootMargin: "-18% 0px -68% 0px", threshold: [0, 0.2, 0.6] }
-    );
-
-    for (const [id] of sections) {
-      const element = document.getElementById(id);
-      if (element) observer.observe(element);
-    }
-    return () => observer.disconnect();
+    // Native anchors own scrolling; this only updates the visible-section indicator.
+    let frame=0;
+    const update=()=>{
+      frame=0;
+      const offset=window.innerWidth>=768?112:192;
+      let current:(typeof sections)[number][0]='overview';
+      for(const [id] of sections){const element=document.getElementById(id);if(element&&element.getBoundingClientRect().top<=offset+2)current=id;}
+      setActive(current);
+    };
+    const schedule=()=>{if(!frame)frame=requestAnimationFrame(update);};
+    update();window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',schedule);
+    return ()=>{window.removeEventListener('scroll',schedule);window.removeEventListener('resize',schedule);if(frame)cancelAnimationFrame(frame);};
   }, []);
 
   return (
@@ -42,6 +40,7 @@ export function AdminSectionNav() {
           <li key={id}>
             <a
               href={`#${id}`}
+              onClick={()=>setActive(id)}
               aria-current={active === id ? "location" : undefined}
               className={`group flex min-h-10 items-center gap-3 rounded-lg border px-3 py-2 text-xs font-medium transition focus:outline-none focus:ring-2 focus:ring-[#a67c35]/45 lg:w-full ${
                 active === id

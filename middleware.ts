@@ -9,4 +9,4 @@ export function middleware() {
   response.headers.set("X-Content-Type-Options", "nosniff");
   return response;
 }
-export const config = { matcher: ["/admin/diagnostics/:path*", "/api/admin/diagnostics/:path*"] };
+export const config = { matcher: ["/admin", "/admin/audience/:path*", "/admin/diagnostics/:path*", "/api/admin/diagnostics/:path*"] };

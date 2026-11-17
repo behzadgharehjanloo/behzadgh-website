@@ -5,6 +5,8 @@ import { isSameOriginPost, requestClientKey } from "@/lib/request-security";
 import { normalizeEmail, subscribe } from "@/lib/subscribers";
 import { subscriptionAllowed } from "@/lib/subscription-rate-limit";
 
+import { signupRequestGeography } from "@/lib/signup-geography-server";
+
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
@@ -28,7 +30,8 @@ export async function POST(request: Request) {
   if (!email) return publicResult("invalid", 400);
 
   try {
-    const result = await subscribe(email);
+    const geography = signupRequestGeography(request);
+    const result = geography === undefined ? await subscribe(email) : await subscribe(email, geography);
     if (result?.outcome === "created") {
       const delivery = await deliverImmediateWelcome(result, { query });
       return NextResponse.json({ ok: true, outcome: "created", delivery });

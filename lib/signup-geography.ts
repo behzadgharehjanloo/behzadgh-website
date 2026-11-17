@@ -1,15 +1,11 @@
-// Preparation only: no request handler imports this module. No database or logging.
+import {signupRegionNames} from './signup-region-names';
+// Pure normalization only. No database, logging or trust inference.
 // Country allowlist: assigned ISO 3166-1 alpha-2 codes; reserved/pseudo codes excluded.
 const countries=new Set(('AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW').split(' '));
 // Conservative first-level registry. Other countries retain valid country + Unknown region.
 // Expand only from reviewed ISO 3166-2 data; syntactically plausible is not validation.
-const subdivisions:Record<string,Set<string>>={
- US:new Set('AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC AS GU MP PR UM VI'.split(' ')),
- CA:new Set('AB BC MB NB NL NS NT NU ON PE QC SK YT'.split(' ')),
- GB:new Set('ENG NIR SCT WLS'.split(' ')),
- AU:new Set('ACT NSW NT QLD SA TAS VIC WA'.split(' ')),
- DE:new Set('BW BY BE BB HB HH HE MV NI NW RP SL SN ST SH TH'.split(' '))
-};
+// One reviewed, country-qualified registry serves validation and display names.
+const subdivisions = Object.fromEntries(Object.entries(signupRegionNames).map(([country, names]) => [country, new Set(Object.keys(names))]));
 export type SignupGeography={country:string|null;region:string|null};
 export const unknownSignupGeography=():SignupGeography=>({country:null,region:null});
 function code(value:unknown,max:number) {

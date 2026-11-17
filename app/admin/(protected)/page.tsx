@@ -11,6 +11,7 @@ import {
   type AdminFilters,
   type SourceShare
 } from "@/lib/admin-dashboard.mjs";
+import { GlobalAudienceSection } from "@/components/admin/GlobalAudienceSection";
 import { requireAdmin } from "@/lib/auth";
 import { query } from "@/lib/database";
 
@@ -182,7 +183,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
   return (
     <div className="mx-auto w-full max-w-[1540px] px-3 pb-20 pt-4 sm:px-6 lg:px-8">
       <div className="lg:grid lg:grid-cols-[178px_minmax(0,1fr)] lg:gap-6">
-        <aside className="sticky top-[160px] z-20 -mx-3 border-y border-line bg-[#faf6ee]/95 px-2 py-2 backdrop-blur sm:-mx-6 sm:px-5 md:top-[76px] lg:static lg:mx-0 lg:border-y-0 lg:border-r lg:bg-transparent lg:px-0 lg:pr-4 lg:pt-5 lg:backdrop-blur-none">
+        <aside className="z-20 -mx-3 border-y border-line bg-[#faf6ee]/95 px-2 py-2 backdrop-blur sm:-mx-6 sm:px-5 lg:static lg:mx-0 lg:border-y-0 lg:border-r lg:bg-transparent lg:px-0 lg:pr-4 lg:pt-5 lg:backdrop-blur-none">
           <AdminSectionNav />
         </aside>
 
@@ -209,13 +210,13 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </div>
           </header>
 
-          <section id="overview" aria-labelledby="overview-heading" className="scroll-mt-48 pt-6 md:scroll-mt-28">
+          <section id="overview" tabIndex={-1} aria-labelledby="overview-heading" className="scroll-mt-48 pt-6 md:scroll-mt-28">
             <h2 id="overview-heading" className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8b692f]">Executive overview</h2>
             <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(([label, value, note]) => <MetricCard key={label} label={label} value={value} note={note} />)}</div>
           </section>
 
           <div className="mt-5 grid items-stretch gap-4">
-            <section id="growth" aria-labelledby="growth-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
+            <section id="growth" tabIndex={-1} aria-labelledby="growth-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div id="growth-heading"><PanelHeading eyebrow="Audience growth" copy={`Historical active audience · ${dashboard.growthGranularity} · America/New_York`} /></div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -235,7 +236,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
               <AdminGrowthChart current={dashboard.growth} previous={dashboard.previousGrowth} compare={dashboard.compareGrowth} granularity={dashboard.growthGranularity} />
             </section>
 
-            <section id="velocity" aria-labelledby="velocity-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
+            <section id="velocity" tabIndex={-1} aria-labelledby="velocity-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
               <div id="velocity-heading"><PanelHeading eyebrow="Growth velocity" copy="Complementary acquisition signals for the selected period." /></div>
               <dl className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-lg border border-line bg-[#fbf8f2] p-4"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">Best acquisition day</dt><dd className="mt-2 font-serif text-2xl text-[#0b1d33]">{dashboard.velocity.bestAcquisitionDay?.signups ?? "—"}</dd><p className="mt-1 text-[10px] text-muted">{dashboard.velocity.bestAcquisitionDay ? formatAdminCalendarDay(dashboard.velocity.bestAcquisitionDay.day) : "No signup activity yet"}</p></div>
@@ -247,20 +248,20 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </section>
           </div>
 
-          <div className="mt-4 grid items-stretch gap-4 xl:grid-cols-[0.85fr_1.35fr_1fr]">
-            <section id="sources" aria-labelledby="sources-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
+          <div className="mt-4 grid items-stretch gap-4">
+            <section id="sources" tabIndex={-1} aria-labelledby="sources-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
               <div id="sources-heading"><PanelHeading eyebrow="Acquisition sources" copy="Where subscribers come from." /></div>
               {dashboard.sources.length ? <SourceDonut sources={dashboard.sources} /> : <p className="mt-5 text-xs text-muted">Source information appears after the first subscriber joins.</p>}
             </section>
 
-            <section id="delivery" aria-labelledby="delivery-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
+            <section id="delivery" tabIndex={-1} aria-labelledby="delivery-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
               <div id="delivery-heading"><PanelHeading eyebrow="Delivery health" copy="Welcome email operations and system status." /></div>
               <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4"><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">Sent</dt><dd className="mt-1 font-serif text-2xl text-[#0b1d33]">{dashboard.delivery.sent}</dd></div><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">Queued</dt><dd className="mt-1 font-serif text-2xl text-[#0b1d33]">{dashboard.delivery.queued}</dd></div><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">Failed</dt><dd className="mt-1 font-serif text-2xl text-[#0b1d33]">{dashboard.delivery.failed}</dd></div><div><dt className="text-[9px] uppercase tracking-[0.08em] text-muted">Delivery rate</dt><dd className="mt-1 font-serif text-xl text-[#0b1d33]">{formatPercent(dashboard.delivery.deliveryRate, 1)}</dd></div></dl>
               <dl className="mt-4 grid gap-3 border-t border-line pt-3 text-[10px] sm:grid-cols-2"><div><dt className="text-muted">Most recent successful send</dt><dd className="mt-1 font-medium text-[#0b1d33]">{formatAdminDate(dashboard.delivery.mostRecentSentAt)}</dd></div><div><dt className="text-muted">Most recent failure</dt><dd className="mt-1 font-medium text-[#0b1d33]">{formatAdminDate(dashboard.delivery.mostRecentFailureAt)}</dd></div></dl>
               <div className="mt-4 grid gap-2 border-t border-line pt-3 sm:grid-cols-3"><StatusItem label="Database" value="Healthy" /><StatusItem label="Gmail" value={dashboard.delivery.gmailStatus === "operational" ? "Operational" : "Needs attention"} attention={dashboard.delivery.gmailStatus !== "operational"} /><StatusItem label="Queue" value={dashboard.delivery.queueStatus === "empty" ? "Empty" : dashboard.delivery.queueStatus === "pending" ? "Pending" : "Failed items"} attention={dashboard.delivery.queueStatus === "failed"} /></div>
             </section>
 
-            <section id="activity" aria-labelledby="activity-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
+            <section id="activity" tabIndex={-1} aria-labelledby="activity-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
               <div id="activity-heading"><PanelHeading eyebrow="Recent activity" copy="Newest recorded events." /></div>
               <ol className="mt-3 divide-y divide-line">
                 {dashboard.recentActivity.length ? dashboard.recentActivity.slice(0, 6).map((activity, index) => <li key={`${activity.type}-${activity.email}-${activity.occurredAt}-${index}`} className="grid grid-cols-[22px_1fr_auto] gap-2 py-3"><span aria-hidden="true" className={`mt-0.5 grid h-5 w-5 place-items-center rounded-full text-[9px] font-semibold text-white ${activity.type.includes("failed") || activity.type.includes("unsubscribed") ? "bg-[#9c6a52]" : "bg-[#4f8a58]"}`}>{activity.type === "welcome_sent" ? "✓" : activity.type === "subscriber_joined" ? "+" : "·"}</span><div className="min-w-0"><p className="text-[11px] font-semibold text-[#0b1d33]"><ActivityLabel type={activity.type} /></p><p className="mt-0.5 truncate text-[10px] text-muted" title={activity.email}>{activity.email}</p></div><time dateTime={asDate(activity.occurredAt)?.toISOString()} className="whitespace-nowrap text-[9px] text-muted">{formatAdminDate(activity.occurredAt)}</time></li>) : <li className="py-5 text-xs text-muted">Activity appears after the first subscriber event.</li>}
@@ -268,7 +269,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             </section>
           </div>
 
-          <section id="subscribers" aria-labelledby="subscribers-heading" className={`${panel} mt-4 scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
+          <section id="subscribers" tabIndex={-1} aria-labelledby="subscribers-heading" className={`${panel} mt-4 scroll-mt-48 p-4 md:scroll-mt-28 sm:p-5`}>
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div id="subscribers-heading"><PanelHeading eyebrow="Subscribers" copy={`${dashboard.filteredCount.toLocaleString()} matching record${dashboard.filteredCount === 1 ? "" : "s"}, newest first.`} /></div>
               <form method="get" action="/admin" className="grid gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_150px_190px_auto] lg:items-end"><input type="hidden" name="range" value={dashboard.selectedRange} />{filters.compare ? <input type="hidden" name="compare" value="1" /> : null}<label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Email starts with</span><input name="search" type="search" defaultValue={filters.search} placeholder="Search by email…" maxLength={254} autoComplete="off" className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none placeholder:text-muted focus:border-[#a67c35] focus:ring-2 focus:ring-[#a67c35]/20" /></label><label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Status</span><select name="status" aria-label="Status" defaultValue={filters.status} className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none focus:border-[#a67c35]"><option value="all">All statuses</option>{ADMIN_STATUSES.map((status) => <option key={status} value={status}>{titleCase(status)}</option>)}</select></label><label className="text-[10px] font-semibold text-[#0b1d33]"><span className="sr-only">Source</span><select name="source" aria-label="Source" defaultValue={filters.source} className="min-h-10 w-full rounded-md border border-line bg-[#fbf8f2] px-3 text-xs font-normal outline-none focus:border-[#a67c35]"><option value="all">All sources</option>{dashboard.sources.map((source) => <option key={source.source} value={source.source}>{sourceLabel(source.source)}</option>)}</select></label><button type="submit" className="min-h-10 rounded-md bg-[#0b1d33] px-5 text-xs font-semibold text-[#fffaf1] transition hover:bg-[#17304d] focus:outline-none focus:ring-2 focus:ring-[#a67c35]/50">Apply</button></form>
@@ -277,19 +278,21 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
             {dashboard.pageCount > 1 ? <nav aria-label="Subscriber pagination" className="mt-4 flex items-center justify-between gap-4 text-xs">{dashboard.page > 1 ? <Link href={withFilters(filters, { range: dashboard.selectedRange, page: dashboard.page - 1 })} className="font-medium text-[#0b1d33] underline">Previous</Link> : <span className="text-muted/60">Previous</span>}<span className="text-muted">Page {dashboard.page} of {dashboard.pageCount}</span>{dashboard.page < dashboard.pageCount ? <Link href={withFilters(filters, { range: dashboard.selectedRange, page: dashboard.page + 1 })} className="font-medium text-[#0b1d33] underline">Next</Link> : <span className="text-muted/60">Next</span>}</nav> : null}
           </section>
 
-          <div className="mt-4 grid items-stretch gap-4 xl:grid-cols-[1fr_1.1fr]">
-            <section id="milestones" aria-labelledby="milestones-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
+          <div className="mt-4 grid items-stretch gap-4">
+            <section id="milestones" tabIndex={-1} aria-labelledby="milestones-heading" className={`${panel} scroll-mt-48 p-4 md:scroll-mt-28`}>
               <div id="milestones-heading"><PanelHeading eyebrow="Milestones" copy="Audience progress over time." /></div>
               <ol className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">{dashboard.milestones.milestones.map((milestone) => <li key={milestone.target} className={`rounded-md border p-2.5 text-center ${milestone.achieved ? "border-[#a67c35] bg-[#b68a3b] text-white" : dashboard.milestones.next?.target === milestone.target ? "border-[#a67c35] bg-[#fffaf1]" : "border-line bg-[#fbf8f2]"}`}><p className={`font-serif text-xl ${milestone.achieved ? "text-white" : "text-[#0b1d33]"}`}>{milestone.target.toLocaleString()}</p><p className={`mt-1 text-[8px] uppercase tracking-[0.08em] ${milestone.achieved ? "text-white/85" : "text-muted"}`}>{milestone.achieved ? `Achieved · ${formatAdminDate(milestone.achievedAt)}` : dashboard.milestones.next?.target === milestone.target ? "Next milestone" : "Future"}</p></li>)}</ol>
               {dashboard.milestones.next ? <div className="mt-4 border-t border-line pt-3"><div className="flex justify-between text-[10px]"><span className="font-semibold text-[#0b1d33]">Next: {dashboard.milestones.next.target.toLocaleString()} subscribers</span><span className="text-muted">{overview.total} / {dashboard.milestones.next.target}</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e5d9c8]"><div className="h-full rounded-full bg-[#a67c35]" style={{ width: `${dashboard.milestones.progress}%` }} /></div></div> : <p className="mt-4 border-t border-line pt-3 text-xs text-muted">All current milestones have been reached.</p>}
             </section>
 
-            <section id="audience-snapshot" aria-labelledby="snapshot-heading" className={`${panel} scroll-mt-48 border-[#c7ae7d] bg-[#fffaf1] p-4 md:scroll-mt-28`}>
+            <section id="audience-snapshot" tabIndex={-1} aria-labelledby="snapshot-heading" className={`${panel} scroll-mt-48 border-[#c7ae7d] bg-[#fffaf1] p-4 md:scroll-mt-28`}>
               <div id="snapshot-heading"><PanelHeading eyebrow="Audience snapshot" copy="A concise summary for future conversations." /></div>
               <dl className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">{[["Tracking start", formatAdminDate(dashboard.audienceSnapshot.trackingStartAt)], ["Active subscribers", dashboard.audienceSnapshot.activeSubscribers.toLocaleString()], ["Net growth · 30 days", signed(dashboard.audienceSnapshot.net30Days)], ["Net growth · 90 days", signed(dashboard.audienceSnapshot.net90Days)], ["Average monthly net growth", dashboard.audienceSnapshot.averageMonthlyNetGrowth === null ? "Not enough history" : dashboard.audienceSnapshot.averageMonthlyNetGrowth.toFixed(1)], ["Welcome delivery rate", formatPercent(dashboard.audienceSnapshot.welcomeDeliveryRate, 1)], ["Unsubscribe rate", formatPercent(dashboard.audienceSnapshot.unsubscribeRate, 1)], ["Primary source", sourceLabel(dashboard.audienceSnapshot.primarySource)]].map(([label, value]) => <div key={label} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 border-b border-[#e4d7c2] pb-2"><dt className="text-[9px] font-semibold uppercase tracking-[0.08em] text-muted">{label}</dt><dd className="text-right text-[11px] font-medium text-[#0b1d33]">{value}</dd></div>)}</dl>
               <div className="mt-4 rounded-md border border-[#dfd0b8] bg-[#fbf5e9] px-3 py-2 text-[10px] leading-4 text-muted"><p>Open and click tracking are not enabled, preserving subscriber privacy.</p><p>Exportable audience reports can be added once engagement history is available.</p></div>
             </section>
           </div>
+
+          <GlobalAudienceSection />
         </div>
       </div>
     </div>
