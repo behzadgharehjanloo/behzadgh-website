@@ -82,11 +82,12 @@ export async function subscribe(email: string, geography?: SignupGeography) {
        ON CONFLICT (dedupe_key) DO NOTHING`,
       [unsubscribeHash, now, CONSENT_VERSION, unsubscribeNonce, confirmationNonce, confirmationHash, confirmationExpiry, existing.id]
     );
-    return { outcome: "confirmation_required" as const };
+    return { outcome: "confirmation_required" as const, subscriberId: existing.id, email, confirmationNonce };
   }
 
   const expired = !existing.confirmation_expires_at || Number(existing.confirmation_expires_at) <= now;
   const resendAllowed = Number(existing.consented_at) <= now - 15 * 60;
+  let activeConfirmationNonce = existing.confirmation_nonce;
   if (!existing.confirmation_nonce || expired || resendAllowed) {
     await query(
       `WITH updated AS (
@@ -104,8 +105,9 @@ export async function subscribe(email: string, geography?: SignupGeography) {
        ON CONFLICT (dedupe_key) DO NOTHING`,
       [unsubscribeNonce, unsubscribeHash, confirmationNonce, confirmationHash, confirmationExpiry, now, existing.id, existing.confirmation_nonce]
     );
+    activeConfirmationNonce = confirmationNonce;
   }
-  return { outcome: "confirmation_required" as const };
+  return { outcome: "confirmation_required" as const, subscriberId: existing.id, email, confirmationNonce: activeConfirmationNonce };
 }
 
 export async function confirmByToken(token: string) {
