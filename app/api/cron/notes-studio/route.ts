@@ -1,5 +1,5 @@
 import {timingSafeEqual} from 'node:crypto';
-import {studioEnabled} from '@/lib/notes-studio';
+import {studioEnabled,publicDeliveryEnabled} from '@/lib/notes-studio';
 import {publishDueNotes,dispatchStudioEmails} from '@/lib/notes-studio-worker';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -12,7 +12,7 @@ function authorized(request:Request){
 }
 export async function GET(request:Request){
  if(!authorized(request))return Response.json({ok:false},{status:401});
- if(!studioEnabled())return Response.json({ok:true,disabled:true},{headers:{'Cache-Control':'no-store'}});
+ if(!studioEnabled()||!publicDeliveryEnabled())return Response.json({ok:true,disabled:true},{headers:{'Cache-Control':'no-store'}});
  try{
   const published=await publishDueNotes(5);
   // Two serial attempts cap execution under Hobby's short function budget.
