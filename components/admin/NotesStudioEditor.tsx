@@ -67,7 +67,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  }
  function incorporate(n:Note){
   setNotes(prev=>[n,...prev.filter(x=>x.id!==n.id)]);
-  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt};
+  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);setState(n.state);setPaused(n.paused);
   setTest(null);
  }
