@@ -55,6 +55,9 @@ export function FollowSignup({ geographyDisclosure = false }: { geographyDisclos
         <div className="mt-5 max-w-[680px] space-y-3 text-[17px] leading-[1.7] text-muted sm:text-lg sm:leading-[1.68]">
           <p>The next note will find you when it&rsquo;s ready.</p>
           <p>Until then, you&rsquo;re welcome to explore earlier notes.</p>
+          <p className="text-sm leading-6">
+            Using Gmail? If your welcome email appears in Promotions, move it to Primary. If Gmail asks whether to do this for future messages from this sender, choose Yes. Gmail controls inbox categories, so this cannot be guaranteed for everyone.
+          </p>
         </div>
         <Link
           href="/notes"
