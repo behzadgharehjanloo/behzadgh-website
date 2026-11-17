@@ -2,7 +2,7 @@ import type {Metadata} from 'next';
 import Link from 'next/link';
 import {redirect} from 'next/navigation';
 import {isAdminAuthenticatedReadOnly} from '@/lib/auth';
-import {studioEnabled,listStudioNotes} from '@/lib/notes-studio';
+import {studioEnabled,publicDeliveryEnabled,listStudioNotes} from '@/lib/notes-studio';
 import {NotesStudioEditor} from '@/components/admin/NotesStudioEditor';
 export const dynamic='force-dynamic';
 export const metadata:Metadata={title:'Notes Studio · Admin',robots:{index:false,follow:false}};
@@ -17,6 +17,6 @@ export default async function NotesStudioPage(){
  <h1 className="mt-6 font-serif text-4xl">Notes Studio</h1>
  {!enabled?<div className="mt-6 rounded border border-line p-6"><p>Notes Studio has been implemented but is not yet activated in Production.</p><p className="mt-3 text-sm text-muted">Apply the dedicated reviewed migration, then enable NOTES_STUDIO_ENABLED=1 in Production and redeploy. Welcome and existing subscribers remain independent.</p></div>:
  error?<p role="alert" className="mt-6">{error}</p>:
- <NotesStudioEditor initialNotes={notes}/>}
+ <NotesStudioEditor initialNotes={notes} deliveryEnabled={publicDeliveryEnabled()}/>}
  </main>;
 }
