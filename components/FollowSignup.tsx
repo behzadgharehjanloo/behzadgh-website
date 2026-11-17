@@ -3,11 +3,10 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 
-import { signupGeographyDisclosure } from "@/lib/signup-geography-disclosure";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function FollowSignup({ geographyDisclosure = false }: { geographyDisclosure?: boolean }) {
+export function FollowSignup() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
@@ -81,7 +80,7 @@ export function FollowSignup({ geographyDisclosure = false }: { geographyDisclos
           type="email"
           placeholder="you@example.com"
           required
-          aria-describedby={error ? "email-error email-privacy" : "email-privacy"}
+          aria-describedby={error ? "email-error" : undefined}
           className="min-h-12 flex-1 border border-line bg-paper px-4 text-[17px] text-ink outline-none transition placeholder:text-muted/70 focus:border-ink"
         />
         <button
@@ -98,10 +97,7 @@ export function FollowSignup({ geographyDisclosure = false }: { geographyDisclos
           {error}
         </p>
       ) : null}
-      <p id="email-privacy" className="mt-4 max-w-[680px] text-sm leading-6 text-muted">
-        Your email stays private. I&rsquo;ll only use it to send new notes, and you can unsubscribe at any time.
-        {geographyDisclosure ? <span className="mt-3 block">{signupGeographyDisclosure}</span> : null}
-      </p>
+
     </form>
   );
 }
