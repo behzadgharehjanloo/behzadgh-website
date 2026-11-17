@@ -8,6 +8,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function FollowSignup() {
   const [submitted, setSubmitted] = useState(false);
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [error, setError] = useState("");
   const [isPending, setIsPending] = useState(false);
 
@@ -39,6 +40,8 @@ export function FollowSignup() {
         throw new Error(data?.error || "Something went wrong. Please try again.");
       }
 
+      const result = (await response.json().catch(() => null)) as { outcome?: string } | null;
+      setNeedsConfirmation(result?.outcome === "confirmation_required");
       setSubmitted(true);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Something went wrong. Please try again.");
@@ -50,9 +53,9 @@ export function FollowSignup() {
   if (submitted) {
     return (
       <div className="mt-10 border-y border-line py-8">
-        <h2 className="font-serif text-[30px] font-medium leading-tight text-ink sm:text-[38px]">Welcome.</h2>
+        <h2 className="font-serif text-[30px] font-medium leading-tight text-ink sm:text-[38px]">{needsConfirmation ? "Check your email." : "Welcome."}</h2>
         <div className="mt-5 max-w-[680px] space-y-3 text-[17px] leading-[1.7] text-muted sm:text-lg sm:leading-[1.68]">
-          <p>The next note will find you when it&rsquo;s ready.</p>
+          <p>{needsConfirmation ? "We sent a confirmation request to your email address. Please open it and confirm your subscription." : "The next note will find you when it&rsquo;s ready."}</p>
           <p>Until then, you&rsquo;re welcome to explore earlier notes.</p>
           <p className="text-sm leading-6">
             Using Gmail? If your welcome email appears in Promotions, move it to Primary. If Gmail asks whether to do this for future messages from this sender, choose Yes. Gmail controls inbox categories, so this cannot be guaranteed for everyone.
