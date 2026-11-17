@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getNoteBySlug, notes } from "@/lib/notes";
+import {publishedStudioNote} from "@/lib/notes-studio-public";
 
 type NotePageProps = {
   params: Promise<{
@@ -15,6 +16,8 @@ const dateFormatter = new Intl.DateTimeFormat("en", {
   year: "numeric"
 });
 
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return notes.map((note) => ({
     slug: note.slug
@@ -24,6 +27,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: NotePageProps): Promise<Metadata> {
   const { slug } = await params;
   const note = getNoteBySlug(slug);
+  const studio = await publishedStudioNote(slug);
+  if (studio) return {title: studio.title,alternates:{canonical:`/notes/${studio.slug}`},description:studio.body.slice(0,155)};
 
   if (!note) {
     return {
@@ -41,6 +46,13 @@ export async function generateMetadata({ params }: NotePageProps): Promise<Metad
 export default async function NotePage({ params }: NotePageProps) {
   const { slug } = await params;
   const note = getNoteBySlug(slug);
+  const studio = await publishedStudioNote(slug);
+  if (studio) return <article className="mx-auto w-full max-w-3xl px-5 pb-16 pt-12 sm:px-8">
+    <Link href="/notes" className="text-sm text-muted transition hover:text-ink">Back to Earlier Notes</Link>
+    <h1 className="mt-10 font-serif text-5xl leading-tight text-ink sm:text-6xl">{studio.title}</h1>
+    <p className="mt-5 text-sm text-muted">{dateFormatter.format(new Date(studio.published_at))}</p>
+    <div className="mt-10 space-y-7 border-t border-line pt-10 font-serif text-2xl leading-10 text-ink/90">{studio.body.split(/\n\s*\n/).map((paragraph,index)=><p key={index} className="whitespace-pre-wrap">{paragraph}</p>)}</div>
+  </article>;
 
   if (!note) {
     notFound();
