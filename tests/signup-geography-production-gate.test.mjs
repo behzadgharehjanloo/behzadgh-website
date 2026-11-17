@@ -23,8 +23,11 @@ test('canonical Production origin reads only country and subdivision after serve
  assert.deepEqual(r.reads,['x-vercel-ip-country','x-vercel-ip-country-region']);
 });
 
-test('apex, alternate deployments, ports, HTTP and misleading hostnames fail before reading metadata',()=>{
- for(const url of ['https://behzadgh.com/api/subscribe','http://www.behzadgh.com/api/subscribe','https://www.behzadgh.com:444/api/subscribe','https://test.vercel.app/api/subscribe','https://www.behzadgh.com.evil.invalid/api/subscribe','https://user@www.behzadgh.com/api/subscribe','not a URL']){
+test('both verified production domains are accepted; unrelated origins and insecure URLs are blocked',()=>{
+ const apex=request('https://behzadgh.com/api/subscribe');
+ assert.deepEqual(plain(gate.signupRequestGeography(apex,production)),{country:'US',region:'US-NY'});
+ assert.deepEqual(apex.reads,['x-vercel-ip-country','x-vercel-ip-country-region']);
+ for(const url of ['http://www.behzadgh.com/api/subscribe','https://www.behzadgh.com:444/api/subscribe','https://test.vercel.app/api/subscribe','https://www.behzadgh.com.evil.invalid/api/subscribe','https://user@www.behzadgh.com/api/subscribe','not a URL']){
   const r=request(url);assert.equal(gate.signupRequestGeography(r,production),undefined);assert.deepEqual(r.reads,[]);
  }
 });
