@@ -11,7 +11,7 @@ async function action(payload:Record<string,unknown>){
 }
 const btn='min-h-11 rounded border border-[#b49a68] px-4 py-2 text-sm hover:bg-[#f2e8d8] disabled:opacity-40';
 const input='w-full rounded border border-line bg-white px-3 py-3 text-base';
-export function NotesStudioEditor({initialNotes}:{initialNotes:Note[]}){
+export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:Note[];deliveryEnabled:boolean}){
  const [notes,setNotes]=useState(initialNotes);
  const [id,setId]=useState<string|null>(null);
  const [revision,setRevision]=useState<number|null>(null);
@@ -67,8 +67,8 @@ export function NotesStudioEditor({initialNotes}:{initialNotes:Note[]}){
    {hasId&&state==='scheduled'&&<section className="mt-8 border-t border-line pt-6"><p className="text-sm">Scheduled: {notes.find(n=>n.id===id)?.scheduled_at??'not available'}</p><button className={btn+' mt-3'} disabled={busy} onClick={()=>run(async()=>{const x=await action({action:'cancel',id});update(x.note);setMessage('Scheduled publication cancelled.');})}>Cancel schedule</button></section>}
    {hasId&&state==='published'&&<section className="mt-8 border-t border-line pt-6"><p className="text-sm">Delivery: {paused?'Paused':'Active'}</p><button className={btn+' mt-3'} disabled={busy} onClick={()=>run(async()=>{const x=await action({action:'pause',id,paused:!paused});update(x.note);setMessage('Delivery '+(x.note.paused?'paused.':'resumed.'));})}>{paused?'Resume deliveries':'Pause remaining deliveries'}</button></section>}
    <section className="mt-8 border-t border-line pt-6"><h3 className="font-serif text-xl">Controlled delivery</h3>
-    <p className="mt-2 text-sm text-muted">Process due publications and at most two queued recipient messages. Use only after checking that the correct Notes are scheduled. A Gmail timeout is marked Needs Review, never automatically resent.</p>
-    <button className={btn+' mt-3'} disabled={busy} onClick={()=>run(async()=>{if(!window.confirm('Process due Notes and send up to two real subscriber emails now?'))return;const x=await action({action:'dispatch',confirm:true});setMessage('Published: '+x.published+'. Delivery: '+JSON.stringify(x.delivery)+'. Refresh to see changed statuses.');})}>Confirm: process next batch</button>
+    <p className="mt-2 text-sm text-muted">Public sending is {deliveryEnabled?'enabled':'disabled until a separate deployment approval'}. Process due publications and at most two queued recipient messages. Use only after checking that the correct Notes are scheduled. A Gmail timeout is marked Needs Review, never automatically resent.</p>
+    <button className={btn+' mt-3'} disabled={busy||!deliveryEnabled} onClick={()=>run(async()=>{if(!window.confirm('Process due Notes and send up to two real subscriber emails now?'))return;const x=await action({action:'dispatch',confirm:true});setMessage('Published: '+x.published+'. Delivery: '+JSON.stringify(x.delivery)+'. Refresh to see changed statuses.');})}>Confirm: process next batch</button>
    </section>
    <p role="status" className="mt-6 whitespace-pre-wrap text-sm text-[#604b2e]">{message}</p>
   </section>
