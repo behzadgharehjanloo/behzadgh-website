@@ -4,12 +4,12 @@ import {query} from './database';
 import {deriveEmailToken} from './email-tokens.mjs';
 import {buildRawMessage} from './gmail-service.mjs';
 import {createGuardedNotesGmailTransport} from './notes-gmail-transport';
-import {requireStudio} from './notes-studio';
+import {requirePublicDelivery} from './notes-studio';
 
 // Every transition is protected by a database claim. Uncertain Gmail outcomes
 // are terminal NEEDS REVIEW; never automatically resend a possibly accepted mail.
 export async function publishDueNotes(maxNotes=5){
- requireStudio();
+ requirePublicDelivery();
  const due=await query<{id:string}>(`SELECT id FROM studio_notes
  WHERE state='scheduled' AND paused=FALSE AND scheduled_at<=NOW()
  ORDER BY scheduled_at LIMIT $1`,[maxNotes]);
@@ -34,9 +34,9 @@ export async function publishDueNotes(maxNotes=5){
 type Delivery={id:string;note_id:string;email:string;unsubscribe_nonce:string|null;subscriber_status:string;
  title:string;body:string;image_alt:string;note_state:string;paused:boolean};
 export async function dispatchStudioEmails(limit=8){
- requireStudio();
+ requirePublicDelivery();
  const summary={claimed:0,accepted:0,cancelled:0,needsReview:0,failed:0};
- const transport=createGuardedNotesGmailTransport(requireStudio);
+ const transport=createGuardedNotesGmailTransport(requirePublicDelivery);
  // One worker cannot automatically retry a stalled Gmail call. Mark the
  // abandoned attempt as uncertain and reserve it for manual investigation.
  await query(`UPDATE studio_deliveries SET state='needs_review',error_category='lease_expired',
