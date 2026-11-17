@@ -2,11 +2,11 @@
 
 import {useMemo, useState} from 'react';
 
-type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;created_at?:string;updated_at?:string};
-type Draft={slug:string;title:string;body:string;imageAlt:string};
+type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string};
+type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string};
 type View='notes'|'calendar'|'delivery';
 type Preview='website'|'email';
-const blank:Draft={slug:'',title:'',body:'',imageAlt:''};
+const blank:Draft={slug:'',title:'',body:'',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:''};
 const primary='inline-flex min-h-11 items-center justify-center rounded-md bg-[#172d42] px-5 py-2.5 text-sm font-medium text-[#fffdf8] transition hover:bg-[#29445b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b08a4c] disabled:cursor-not-allowed disabled:opacity-40';
 const secondary='inline-flex min-h-11 items-center justify-center rounded-md border border-[#d4c4aa] bg-[#fffdf8] px-4 py-2.5 text-sm font-medium text-[#172d42] transition hover:bg-[#f3ebdf] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b08a4c] disabled:cursor-not-allowed disabled:opacity-40';
 const field='mt-2 w-full rounded-md border border-[#d9cdbb] bg-[#fffefa] px-4 py-3 text-[15px] text-[#172d42] outline-none transition focus:border-[#9a753b] focus:ring-2 focus:ring-[#b99a68]/20 disabled:bg-[#f3efe7]';
@@ -36,6 +36,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const [paused,setPaused]=useState(false);
  const [search,setSearch]=useState('');
  const [previewMode,setPreviewMode]=useState<Preview>('website');
+ const [editorTab,setEditorTab]=useState<'edit'|'website'|'email'>('edit');
  const [device,setDevice]=useState<'desktop'|'mobile'>('desktop');
  const [previewHtml,setPreviewHtml]=useState('');
  const [previewOpen,setPreviewOpen]=useState(false);
@@ -53,16 +54,16 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  function guardUnsaved(){return !dirty||window.confirm('You have unsaved changes. Leave this draft without saving?');}
  function choose(n:Note){
   if(!guardUnsaved())return;
-  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt};
+  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);
-  setState(n.state);setPaused(n.paused);setPreviewOpen(false);setPreviewHtml('');
+  setState(n.state);setPaused(n.paused);setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');
   setScheduleDate(n.scheduled_at?new Date(n.scheduled_at).toLocaleString('sv-SE').replace(' ','T').slice(0,16):'');
   setTest(null);setMessage('');setView('notes');
  }
  function fresh(){
   if(!guardUnsaved())return;
   setSelection(null);setDraft(blank);setSaved(blank);setRevision(null);setState('draft');setPaused(false);
-  setPreviewOpen(false);setPreviewHtml('');setTest(null);setMessage('');setView('notes');
+  setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');setTest(null);setMessage('');setView('notes');
  }
  function incorporate(n:Note){
   setNotes(prev=>[n,...prev.filter(x=>x.id!==n.id)]);
