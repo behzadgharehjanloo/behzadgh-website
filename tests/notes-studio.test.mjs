@@ -20,7 +20,7 @@ test('Note validator requires authentic nonempty content and rejects bad slugs',
   {slug:'My-Note',title:'Okay',body:'Original'},
   {slug:'valid',title:'',body:'Original'},
   {slug:'valid',title:'Okay',body:'   '},
-  {slug:'valid',title:'Okay',body:'a'.repeat(15001)}
+  {slug:'valid',title:'Okay',body:'a'.repeat(100001)}
  ])assert.throws(()=>studio.validateDraft(draft));
 });
 test('New campaign tables are isolated from existing subscriber and welcome flows',()=>{
@@ -48,4 +48,29 @@ test('original local Editor, Website preview and Email preview are restored as l
  const migration=fs.readFileSync('db/notes-studio-migrations/0002_original_editor_fields.sql','utf8');
  assert.match(migration,/ADD COLUMN narrator/);
  assert.doesNotMatch(migration,/DELETE FROM|DROP TABLE|UPDATE subscribers/);
+});
+
+test('local editor data limits and unsaved-text safeguards are preserved',()=>{
+ const backend=fs.readFileSync('lib/notes-studio.ts','utf8');
+ const endpoint=fs.readFileSync('app/api/admin/notes-studio/route.ts','utf8');
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ const migration=fs.readFileSync('db/notes-studio-migrations/0003_local_original_text_limits.sql','utf8');
+ assert.match(backend,/body.length>100000/);
+ assert.match(backend,/title.length>200/);
+ assert.match(endpoint,/boundedJson\(request,220000\)/);
+ assert.match(editor,/beforeunload/);
+ assert.match(editor,/ArrowRight/);
+ assert.match(editor,/ArrowLeft/);
+ assert.match(editor,/Home/);
+ assert.match(editor,/End/);
+ assert.match(migration,/100000/);
+ assert.doesNotMatch(migration,/subscribers|email_outbox|studio_deliveries|DELETE FROM|UPDATE studio_notes/i);
+ const original=studio.validateDraft({title:'A',slug:'a',body:'x'.repeat(100000),imageAlt:'',narrator:'Steven'});
+ assert.equal(original.body.length,100000);
+ assert.equal(original.narrator,'Steven');
+ assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:'Hi',narrator:'Unidentified'}));
+ assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:'Hi'+String.fromCharCode(0)+'there'}));
+ assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:String.fromCharCode(0xD800)}));
+
+ assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:'x'.repeat(100001),imageAlt:''}));
 });

@@ -24,11 +24,13 @@ export function validateDraft(value:unknown){
  const slug=typeof v.slug==='string'?v.slug.trim():'';
  const body=typeof v.body==='string'?v.body:'';
  const imageAlt=typeof v.imageAlt==='string'?v.imageAlt.trim():'';
+ if(v.narrator!==undefined&&v.narrator!=='Behzad'&&v.narrator!=='Steven')throw new Error('Choose Behzad or Steven as narrator.');
  const narrator=v.narrator==='Steven'?'Steven':'Behzad';
  const excerpt=typeof v.excerpt==='string'?v.excerpt:'';
  const imageCaption=typeof v.imageCaption==='string'?v.imageCaption:'';
  const seoDescription=typeof v.seoDescription==='string'?v.seoDescription:'';
- if(!title||title.length>160||!slug||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||!body.trim()||body.length>15000||imageAlt.length>250||excerpt.length>1000||imageCaption.length>1000||seoDescription.length>500)throw new Error('A valid title, slug and authentic Note text are required.');
+ if([title,slug,body,imageAlt,excerpt,imageCaption,seoDescription].some(value=>value.includes('\0')||!value.isWellFormed()))throw new Error('Draft contains invalid characters.');
+ if(!title||title.length>200||!slug||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||!body.trim()||body.length>100000||imageAlt.length>500||excerpt.length>1000||imageCaption.length>1000||seoDescription.length>500)throw new Error('A valid title, slug and authentic Note text are required.');
  return {title,slug,body,imageAlt,narrator,excerpt,imageCaption,seoDescription};
 }
 export async function listStudioNotes(){
