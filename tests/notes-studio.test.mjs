@@ -68,5 +68,9 @@ test('local editor data limits and unsaved-text safeguards are preserved',()=>{
  const original=studio.validateDraft({title:'A',slug:'a',body:'x'.repeat(100000),imageAlt:'',narrator:'Steven'});
  assert.equal(original.body.length,100000);
  assert.equal(original.narrator,'Steven');
+ assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:'Hi',narrator:'Unidentified'}));
+ assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:'Hi\\0there'}));
+ assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:'\\uD800'}));
+
  assert.throws(()=>studio.validateDraft({title:'A',slug:'a',body:'x'.repeat(100001),imageAlt:''}));
 });
