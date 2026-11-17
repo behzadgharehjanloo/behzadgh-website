@@ -111,26 +111,36 @@ export async function subscribe(email: string, geography?: SignupGeography) {
 }
 
 export async function confirmByToken(token: string) {
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return false;
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
   const now = Math.floor(Date.now() / 1000);
-  const rows = await query<{ id: string | number }>(
+  const workerId = randomUUID();
+  const rows = await query<{ subscriber_id: string | number; outbox_id: string | number; email: string; unsubscribe_nonce: string }>(
     `WITH updated AS (
        UPDATE subscribers SET status = 'active', confirmed_at = $1, updated_at = $1,
          confirmation_token_hash = NULL, confirmation_expires_at = NULL
        WHERE confirmation_token_hash = $2 AND status = 'pending' AND confirmation_expires_at > $1
-       RETURNING id
+       RETURNING id, email, unsubscribe_nonce
      ), cancelled AS (
        UPDATE email_outbox SET status = 'cancelled', last_error = 'Subscription confirmed', worker_id = NULL, locked_at = NULL
        WHERE subscriber_id IN (SELECT id FROM updated) AND kind = 'confirmation' AND status IN ('queued', 'sending')
-     ), queued AS (
-       INSERT INTO email_outbox (subscriber_id, kind, dedupe_key, next_attempt_at, created_at)
-       SELECT id, 'welcome', 'welcome:' || id || ':' || $1, $1, $1 FROM updated
+     ), claimed AS (
+       INSERT INTO email_outbox (subscriber_id, kind, dedupe_key, status, next_attempt_at, locked_at, worker_id, created_at)
+       SELECT id, 'welcome', 'welcome:' || id || ':' || $1, 'sending', $1, $1, $3, $1 FROM updated
        ON CONFLICT (dedupe_key) DO NOTHING
+       RETURNING id, subscriber_id
      )
-     SELECT id FROM updated`,
-    [now, hashUnsubscribeToken(token)]
+     SELECT updated.id AS subscriber_id, claimed.id AS outbox_id, updated.email, updated.unsubscribe_nonce
+       FROM updated JOIN claimed ON claimed.subscriber_id = updated.id`,
+    [now, hashUnsubscribeToken(token), workerId]
   );
-  return rows.length > 0;
+  if (!rows.length) return null;
+  return {
+    subscriberId: rows[0].subscriber_id,
+    outboxId: rows[0].outbox_id,
+    workerId,
+    email: rows[0].email,
+    unsubscribeNonce: rows[0].unsubscribe_nonce
+  };
 }
 
 export async function confirmationForToken(token: string) {
