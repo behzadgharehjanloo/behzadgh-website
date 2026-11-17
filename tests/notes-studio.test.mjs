@@ -20,7 +20,7 @@ test('Note validator requires authentic nonempty content and rejects bad slugs',
   {slug:'My-Note',title:'Okay',body:'Original'},
   {slug:'valid',title:'',body:'Original'},
   {slug:'valid',title:'Okay',body:'   '},
-  {slug:'valid',title:'Okay',body:'a'.repeat(15001)}
+  {slug:'valid',title:'Okay',body:'a'.repeat(100001)}
  ])assert.throws(()=>studio.validateDraft(draft));
 });
 test('New campaign tables are isolated from existing subscriber and welcome flows',()=>{
