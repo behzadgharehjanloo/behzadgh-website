@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/contact" },
   title: "Contact",
   description: "Contact details for Behzad Gharehjanloo."
 };
@@ -13,20 +15,12 @@ export default function ContactPage() {
         Stay in touch.
       </h1>
       <div className="mt-10 border-y border-line py-8">
-        <dl className="space-y-6 text-[17px] leading-[1.7] text-ink sm:text-lg sm:leading-[1.68]">
-          <div>
-            <dt className="text-sm font-semibold uppercase tracking-[0.14em] text-sage">Email</dt>
-            <dd className="mt-2">Email placeholder</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-semibold uppercase tracking-[0.14em] text-sage">Instagram</dt>
-            <dd className="mt-2">Instagram placeholder</dd>
-          </div>
-          <div>
-            <dt className="text-sm font-semibold uppercase tracking-[0.14em] text-sage">Facebook</dt>
-            <dd className="mt-2">Facebook placeholder</dd>
-          </div>
-        </dl>
+        <p className="max-w-[680px] text-[17px] leading-[1.7] text-ink sm:text-lg">
+          You can follow the writing project and receive new notes by email.
+        </p>
+        <Link href="/subscribe" className="mt-6 inline-flex min-h-12 items-center rounded-full bg-ink px-6 text-sm font-semibold text-paper transition hover:bg-clay focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+          Follow the Journey
+        </Link>
       </div>
     </div>
   );

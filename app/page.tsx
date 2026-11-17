@@ -1,5 +1,6 @@
 import { ButtonLink } from "@/components/ButtonLink";
 import { NoteList } from "@/components/NoteList";
+import { notes } from "@/lib/notes";
 
 export default function Home() {
   return (
@@ -40,7 +41,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl px-5 pb-20 pt-16 sm:px-8 md:pt-20 lg:px-10">
+      {notes.length > 0 ? <section className="mx-auto w-full max-w-6xl px-5 pb-20 pt-16 sm:px-8 md:pt-20 lg:px-10">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
             <p className="text-sm uppercase text-sage">Earlier</p>
@@ -51,7 +52,7 @@ export default function Home() {
           </ButtonLink>
         </div>
         <NoteList limit={3} />
-      </section>
+      </section> : null}
     </div>
   );
 }

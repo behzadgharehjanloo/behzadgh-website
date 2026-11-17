@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: NotePageProps): Promise<Metad
 
   return {
     title: note.title,
+    alternates: { canonical: `/notes/${note.slug}` },
     description: note.excerpt
   };
 }

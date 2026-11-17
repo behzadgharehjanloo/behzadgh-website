@@ -31,7 +31,7 @@ export function Header() {
 
         <nav
           aria-label="Primary navigation"
-          className="flex min-w-0 flex-nowrap items-center gap-x-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#0b1620] sm:gap-x-3 sm:text-[12px] sm:tracking-[0.1em] md:flex-wrap md:justify-end md:gap-x-8 md:gap-y-3 md:text-sm md:font-medium md:tracking-[0.14em]"
+          className="flex w-full min-w-0 flex-nowrap items-center gap-x-2 overflow-x-auto text-[11px] font-semibold uppercase tracking-[0.08em] text-[#0b1620] sm:gap-x-3 sm:text-[12px] sm:tracking-[0.1em] md:flex-wrap md:justify-end md:gap-x-8 md:gap-y-3 md:text-sm md:font-medium md:tracking-[0.14em]"
         >
           {navItems.map((item) => (
             <Link

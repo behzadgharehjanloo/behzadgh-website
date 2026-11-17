@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { NoteList } from "@/components/NoteList";
+import { notes } from "@/lib/notes";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/notes" },
   title: "Earlier Notes",
   description: "Earlier notes from Behzad Gharehjanloo's personal writing project."
 };
@@ -19,7 +21,9 @@ export default function NotesPage() {
         </p>
       </div>
       <div className="mt-10">
-        <NoteList />
+        {notes.length > 0 ? <NoteList /> : (
+          <p className="border-t border-line pt-8 text-[17px] text-muted">The first notes will appear here when they are ready.</p>
+        )}
       </div>
     </div>
   );

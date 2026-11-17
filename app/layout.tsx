@@ -17,19 +17,16 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://behzadgh.com"),
+  metadataBase: new URL("https://www.behzadgh.com"),
   title: {
     default: "Behzad Gharehjanloo",
     template: "%s | Behzad Gharehjanloo"
   },
   description: "Notes, photographs, and occasional letters from Behzad Gharehjanloo.",
-  alternates: {
-    canonical: "/"
-  },
   openGraph: {
     title: "Behzad Gharehjanloo",
     description: "Notes, photographs, and occasional letters.",
-    url: "https://behzadgh.com",
+    url: "https://www.behzadgh.com",
     siteName: "Behzad Gharehjanloo",
     type: "website"
   }

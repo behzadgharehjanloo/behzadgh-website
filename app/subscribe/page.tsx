@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Follow",
+  alternates: { canonical: "/subscribe" },
   description: "Follow Behzad Gharehjanloo's personal writing project."
 };
 
