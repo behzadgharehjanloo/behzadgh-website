@@ -1,7 +1,7 @@
 import 'server-only';
 import {normalizeSignupGeography, type SignupGeography} from './signup-geography';
 
-const productionOrigin = 'https://www.behzadgh.com';
+const productionOrigins = new Set(['https://www.behzadgh.com', 'https://behzadgh.com']);
 const previewHost = /^[a-z0-9-]+\.vercel\.app$/;
 
 /** Server configuration attests reviewed ingress; it is not cryptographic proof.
@@ -17,11 +17,14 @@ export function signupGeographyCollectionEnabled(env: NodeJS.ProcessEnv = proces
 }
 
 export function signupRequestGeography(request: Request, env: NodeJS.ProcessEnv = process.env): SignupGeography | undefined {
- if (!signupGeographyCollectionEnabled(env)) return undefined;
- const expectedOrigin = env.VERCEL_ENV === 'production' ? productionOrigin : `https://${env.VERCEL_URL}`;
- try {
+ if (!signupGeographyCollec try {
   const url = new URL(request.url);
-  if (url.origin !== expectedOrigin || url.username || url.password) return undefined;
+  if (url.username || url.password || url.protocol !== 'https:') return undefined;
+  if (env.VERCEL_ENV === 'production') {
+   if (!productionOrigins.has(url.origin)) return undefined;
+  } else if (url.origin !== `https://${env.VERCEL_URL}`) return undefined;
+ } catch { return undefined; }
+ned;
  } catch { return undefined; }
  return normalizeSignupGeography(request.headers.get('x-vercel-ip-country'), request.headers.get('x-vercel-ip-country-region'));
 }
