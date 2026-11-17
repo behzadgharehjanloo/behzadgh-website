@@ -144,8 +144,8 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
        {previewMode==='email'?previewHtml?<iframe title="Private saved email preview" sandbox="" srcDoc={previewHtml} className="h-[570px] w-full"/>:<div className="p-8 text-sm">Preparing the email preview…</div>:
        <article className="mx-auto max-w-[710px] px-6 py-10 md:px-9">
         <p className="text-[10px] uppercase tracking-[0.2em] text-[#9c8155]">A NOTE FROM BEHZAD</p>
-        <h4 className="mt-3 font-serif text-3xl font-normal leading-tight md:text-[42px]">{selected.title}</h4>
-        <div className="mt-6 border-t border-[#d9cbb7] pt-7">{selected.body.split(/\r?\n\s*\r?\n/).map((paragraph,i)=><p key={i} className="mb-5 whitespace-pre-wrap font-serif text-[18px] leading-[1.75]">{paragraph}</p>)}</div>
+        <h4 className="mt-3 font-serif text-3xl font-normal leading-tight md:text-[42px]">{selected?.title??draft.title}</h4>
+        <div className="mt-6 border-t border-[#d9cbb7] pt-7">{(selected?.body??draft.body).split(/\r?\n\s*\r?\n/).map((paragraph,i)=><p key={i} className="mb-5 whitespace-pre-wrap font-serif text-[18px] leading-[1.75]">{paragraph}</p>)}</div>
        </article>}
       </div>
       <p className="mt-3 text-[11px] text-[#817669]">Private preview only. This is not a publication or a real recipient email.</p>
