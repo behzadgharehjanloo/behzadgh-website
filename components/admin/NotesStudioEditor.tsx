@@ -1,6 +1,6 @@
 'use client';
 
-import {useMemo, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {StudioReadingPreview} from './notes/StudioReadingPreview';
 import {StudioEmailPreview} from './notes/StudioEmailPreview';
 
@@ -50,6 +50,22 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const [month,setMonth]=useState(()=>{const today=new Date();return new Date(today.getFullYear(),today.getMonth(),1);});
  const selected=notes.find(n=>n.id===selection);
  const dirty=JSON.stringify(draft)!==JSON.stringify(saved);
+ // Parity with the verified local NoteEditor: protect unsaved memoir text.
+ useEffect(()=>{
+  if(!dirty)return;
+  const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};
+  const navigation=(event:MouseEvent)=>{
+   if(event.defaultPrevented||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
+   const anchor=event.target instanceof Element?event.target.closest('a'):null;
+   if(!anchor||anchor.target==='_blank'||anchor.hasAttribute('download'))return;
+   if(!window.confirm('Leave this draft? Unsaved changes will be lost.')){
+    event.preventDefault();event.stopPropagation();
+   }
+  };
+  window.addEventListener('beforeunload',warn);
+  document.addEventListener('click',navigation,true);
+  return()=>{window.removeEventListener('beforeunload',warn);document.removeEventListener('click',navigation,true);};
+ },[dirty]);
  const editable=state==='draft';
  const searched=useMemo(()=>notes.filter(n=>[n.title,n.slug,n.state].join(' ').toLowerCase().includes(search.trim().toLowerCase())),[notes,search]);
  const counts={drafts:notes.filter(n=>n.state==='draft').length,scheduled:notes.filter(n=>n.state==='scheduled').length,published:notes.filter(n=>n.state==='published').length};
@@ -125,7 +141,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
      </div>
 
      <div role="tablist" aria-label="Draft views" className="mt-6 flex flex-wrap gap-2 border-b border-[#ded1ba]">
-      {([['edit','Editor'],['website','Website preview'],['email','Email preview']] as const).map(([key,label])=><button key={key} type="button" role="tab" id={'studio-tab-'+key} aria-controls={'studio-panel-'+key} aria-selected={editorTab===key} onClick={()=>setEditorTab(key)} className={'min-h-11 rounded-t border border-b-0 px-4 py-2.5 text-[13px] font-semibold transition '+(editorTab===key?'border-[#17232c] bg-[#17232c] text-[#faf6ee]':'border-[#d5c7ae] bg-[#fffdf8] text-[#606364] hover:bg-[#f0e8da]')}>{label}</button>)}
+      {([['edit','Editor'],['website','Website preview'],['email','Email preview']] as const).map(([key,label],index,tabs)=><button key={key} type="button" role="tab" id={'studio-tab-'+key} aria-controls={'studio-panel-'+key} aria-selected={editorTab===key} tabIndex={editorTab===key?0:-1} onClick={()=>setEditorTab(key)} onKeyDown={event=>{const next=event.key==='ArrowRight'?(index+1)%3:event.key==='ArrowLeft'?(index+2)%3:event.key==='Home'?0:event.key==='End'?2:-1;if(next>=0){event.preventDefault();setEditorTab(tabs[next][0]);document.getElementById('studio-tab-'+tabs[next][0])?.focus();}}} className={'min-h-11 rounded-t border border-b-0 px-4 py-2.5 text-[13px] font-semibold transition '+(editorTab===key?'border-[#17232c] bg-[#17232c] text-[#faf6ee]':'border-[#d5c7ae] bg-[#fffdf8] text-[#606364] hover:bg-[#f0e8da]')}>{label}</button>)}
      </div>
      <section id="studio-panel-edit" role="tabpanel" aria-labelledby="studio-tab-edit" hidden={editorTab!=='edit'} className="pt-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(245px,1fr)]">
