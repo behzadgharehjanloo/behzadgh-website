@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { Header } from "@/components/Header";
+import Link from "next/link";
 import "./globals.css";
 
 const serif = Playfair_Display({
@@ -45,7 +46,7 @@ export default function RootLayout({
           <main>{children}</main>
           <footer className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 py-10 text-sm text-muted sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10">
             <p>Behzad Gharehjanloo</p>
-            <p>Notes, photographs, and occasional letters.</p>
+            <div className="flex items-center gap-5"><p>Notes, photographs, and occasional letters.</p><Link href="/privacy" className="underline-offset-4 hover:underline">Privacy</Link></div>
           </footer>
         </div>
       </body>
