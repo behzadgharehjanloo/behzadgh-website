@@ -146,9 +146,9 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
      <section id="studio-panel-edit" role="tabpanel" aria-labelledby="studio-tab-edit" hidden={editorTab!=='edit'} className="pt-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(245px,1fr)]">
        <div className="min-w-0 space-y-5">
-        <label className="block text-[13px] font-semibold">Title<input className={field} maxLength={160} value={draft.title} disabled={!editable||busy} onChange={e=>setDraft(v=>({...v,title:e.target.value,slug:(!v.slug||v.slug===slugFromTitle(v.title))?slugFromTitle(e.target.value):v.slug}))}/></label>
+        <label className="block text-[13px] font-semibold">Title<input className={field} maxLength={200} value={draft.title} disabled={!editable||busy} onChange={e=>setDraft(v=>({...v,title:e.target.value,slug:(!v.slug||v.slug===slugFromTitle(v.title))?slugFromTitle(e.target.value):v.slug}))}/></label>
         <label className="block text-[13px] font-semibold">Narrator<select className={field} value={draft.narrator} disabled={!editable||busy} onChange={e=>edit('narrator',e.target.value as 'Behzad'|'Steven')}><option value="Behzad">Behzad</option><option value="Steven">Steven</option></select></label>
-        <label className="block text-[13px] font-semibold">Exact Note text<p className="mt-2 text-xs font-normal leading-5 text-[#606364]">Your punctuation, spacing and line breaks are kept. No automatic editing or rewriting.</p><textarea className={field+' min-h-[365px] resize-y font-serif text-[19px] font-normal leading-[1.75]'} rows={15} maxLength={15000} spellCheck={false} autoCorrect="off" autoCapitalize="off" value={draft.body} disabled={!editable||busy} onChange={e=>edit('body',e.target.value)}/></label>
+        <label className="block text-[13px] font-semibold">Exact Note text<p className="mt-2 text-xs font-normal leading-5 text-[#606364]">Your punctuation, spacing and line breaks are kept. No automatic editing or rewriting.</p><textarea className={field+' min-h-[365px] resize-y font-serif text-[19px] font-normal leading-[1.75]'} rows={15} maxLength={100000} spellCheck={false} autoCorrect="off" autoCapitalize="off" value={draft.body} disabled={!editable||busy} onChange={e=>edit('body',e.target.value)}/></label>
         <p className="text-xs text-[#86796a]">{draft.body.length.toLocaleString()} characters · {countWords(draft.body)} words · {dirty?'Unsaved changes':'Saved draft'}</p>
        </div>
        <aside className="min-w-0 border-t border-[#ded1ba] pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
@@ -156,7 +156,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
         <p className="mt-2 text-xs leading-5 text-[#606364]">The original local editor supported photographs and framing. Upload is temporarily unavailable until its original storage pipeline is safely connected.</p>
         <div className="mt-4 grid min-h-[185px] place-content-center border border-dashed border-[#cfc4b0] bg-[#faf6ee] p-5 text-center text-sm text-[#606364]">No photograph selected</div>
         <label className="mt-5 block text-[13px] font-semibold">Choose photograph<input type="file" accept="image/jpeg,image/png" disabled className={field+' cursor-not-allowed opacity-50'}/></label>
-        <label className="mt-4 block text-[13px] font-semibold">Photograph alt text<textarea className={field} rows={3} maxLength={250} disabled={!editable||busy} value={draft.imageAlt} onChange={e=>edit('imageAlt',e.target.value)}/></label>
+        <label className="mt-4 block text-[13px] font-semibold">Photograph alt text<textarea className={field} rows={3} maxLength={500} disabled={!editable||busy} value={draft.imageAlt} onChange={e=>edit('imageAlt',e.target.value)}/></label>
         <p className="mt-1 text-xs leading-5 text-[#606364]">Used for accessibility and fallback text.</p>
         <details className="mt-5 border-t border-[#ded1ba] pt-5"><summary className="min-h-11 cursor-pointer text-[13px] font-semibold">Advanced / SEO</summary>
          <div className="mt-3 space-y-4">
