@@ -14,6 +14,8 @@ export function studioEnabled(env:NodeJS.ProcessEnv=process.env){
  return env.NOTES_STUDIO_ENABLED==='1' && env.VERCEL_ENV==='production' && env.NODE_ENV==='production';
 }
 export function requireStudio(){if(!studioEnabled())throw new Error('Notes Studio is not activated.');}
+export function publicDeliveryEnabled(env:NodeJS.ProcessEnv=process.env){return studioEnabled(env)&&env.NOTES_STUDIO_DELIVERY_ENABLED==='1';}
+export function requirePublicDelivery(){if(!publicDeliveryEnabled())throw new Error('Public Notes delivery is independently disabled.');}
 export function validateDraft(value:unknown){
  if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid Note.');
  const v=value as Record<string,unknown>;
