@@ -50,18 +50,18 @@ test('small month or region withholds only those dimensions, not the country map
  ])});
  const r=await s.loadGlobalAudienceReport();assert.equal(r.status,'available');
  assert.equal(r.total,12);assert.equal(r.regionsAvailable,false);assert.equal(r.monthsAvailable,false);
- assert.equal(r.countries[0].code,'US');assert.deepEqual(r.countries[0].regions,[]);assert.deepEqual(r.months,[]);
+ assert.equal(r.countries[0].code,'US');assert.equal(JSON.stringify(r.countries[0].regions),'[]');assert.equal(JSON.stringify(r.months),'[]');
 });
 test('small country group still withholds the entire report',async()=>{
  const r=await setup({rows:aggregated([{country:'US',region:'US-NY',month:'2026-07',count:4},{country:null,region:null,month:'2026-07',count:6}])}).loadGlobalAudienceReport();
- assert.deepEqual(r,{status:'withheld'});
+ assert.equal(JSON.stringify(r),'{"status":"withheld"}');
 });
 test('identifiers are never serialized',async()=>{
  const rows=aggregated([{country:'CA',region:'CA-ON',month:'2026-01',count:5}]).map(x=>({...x,email:'private@example.invalid',id:'SECRET_ID'}));
  const output=JSON.stringify(await setup({rows}).loadGlobalAudienceReport());
  assert.doesNotMatch(output,/private|email|SECRET/);
 });
-test('database failure returns sanitized unavailable',async()=>assert.deepEqual(await setup({failure:true}).loadGlobalAudienceReport(),{status:'unavailable'}));
+test('database failure returns sanitized unavailable',async()=>assert.equal(JSON.stringify(await setup({failure:true}).loadGlobalAudienceReport()),'{"status":"unavailable"}'));
 test('empty report has no countries',async()=>{const r=await setup().loadGlobalAudienceReport();assert.equal(r.status,'available');assert.equal(r.total,0);assert.equal(r.countries.length,0);});
 test('invalid country fails closed',async()=>{const rows=aggregated([{country:'ZZ',region:null,month:'2026-07',count:8}]);assert.equal((await setup({rows}).loadGlobalAudienceReport()).status,'unavailable');});
 test('one SQL query, no personal fields or write operations',()=>{
@@ -89,5 +89,5 @@ test('admin access and feature isolation',()=>{
 test('auth failure fails closed',async()=>{
  let calls=0;
  const s=load('lib/global-audience-report.ts',{'@/lib/auth':{isAdminAuthenticatedReadOnly:async()=>{throw Error('SECRET_SESSION_DATABASE');}},'@/lib/database':{query:async()=>{calls++;return [];}}},{process:{env:{SIGNUP_GEOGRAPHY_REPORT_ENABLED:'1'}}});
- assert.deepEqual(await s.loadGlobalAudienceReport(),{status:'unavailable'});assert.equal(calls,0);
+ assert.equal(JSON.stringify(await s.loadGlobalAudienceReport()),'{"status":"unavailable"}');assert.equal(calls,0);
 });
