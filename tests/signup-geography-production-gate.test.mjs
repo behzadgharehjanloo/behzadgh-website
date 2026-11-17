@@ -54,16 +54,15 @@ test('reporting, diagnostics and email flags neither enable nor disable collecti
  }
 });
 
-test('dynamic Follow page shares the collection gate and displays the existing disclosure whenever collection can run',()=>{
- for(const env of [production,{...production,VERCEL_ENV:'preview',VERCEL_URL:'preview.vercel.app',SIGNUP_GEOGRAPHY_INGRESS:'reviewed-vercel-direct'}]){
-  const page=load('app/subscribe/page.tsx',{}, {process:{env}});
-  assert.equal(page.dynamic,'force-dynamic');
-  const html=renderToStaticMarkup(React.createElement(page.default));
-  assert.match(html,/our hosting provider may estimate your country and state or province/);
-  assert.match(html,/remove the location codes when you unsubscribe/);
- }
- const page=load('app/subscribe/page.tsx',{}, {process:{env:{...production,SIGNUP_GEOGRAPHY_COLLECTION_ENABLED:'0'}}});
- assert.doesNotMatch(renderToStaticMarkup(React.createElement(page.default)),/our hosting provider/);
+test('Follow form stays uncluttered while privacy details remain available separately',()=>{
+ const page=load('app/subscribe/page.tsx');
+ const html=renderToStaticMarkup(React.createElement(page.default));
+ assert.doesNotMatch(html,/our hosting provider may estimate your country and state or province/);
+ assert.doesNotMatch(html,/Your email stays private/);
+ const privacy=load('app/privacy/page.tsx');
+ const privacyHtml=renderToStaticMarkup(React.createElement(privacy.default));
+ assert.match(privacyHtml,/our hosting provider may estimate your country and state or province/);
+ assert.match(privacyHtml,/remove the location codes when you unsubscribe/);
 });
 
 test('every reviewed subdivision display entry is validated country-by-country without adding guessed codes',()=>{
