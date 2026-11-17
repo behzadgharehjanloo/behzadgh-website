@@ -28,7 +28,7 @@ export function validateDraft(value:unknown){
  const excerpt=typeof v.excerpt==='string'?v.excerpt:'';
  const imageCaption=typeof v.imageCaption==='string'?v.imageCaption:'';
  const seoDescription=typeof v.seoDescription==='string'?v.seoDescription:'';
- if(!title||title.length>160||!slug||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||!body.trim()||body.length>15000||imageAlt.length>250||excerpt.length>1000||imageCaption.length>1000||seoDescription.length>500)throw new Error('A valid title, slug and authentic Note text are required.');
+ if(!title||title.length>200||!slug||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||!body.trim()||body.length>100000||imageAlt.length>500||excerpt.length>1000||imageCaption.length>1000||seoDescription.length>500)throw new Error('A valid title, slug and authentic Note text are required.');
  return {title,slug,body,imageAlt,narrator,excerpt,imageCaption,seoDescription};
 }
 export async function listStudioNotes(){
