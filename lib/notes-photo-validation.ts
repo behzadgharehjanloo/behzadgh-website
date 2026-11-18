@@ -6,8 +6,8 @@ export const MAX_NOTE_PHOTO_BYTES=3*1024*1024;
 export type ValidatedPhoto={bytes:Buffer;mimeType:'image/jpeg'|'image/png';width:number;height:number;sha256:string};
 function invalid():never{throw Error('Use a valid JPEG or non-interlaced PNG photograph under 3 MB and 16 megapixels (8192px per side).');}
 function validSize(width:number,height:number){if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>8192||height>8192||width*height>16_000_000)invalid();}
-export function validateNotePhoto(bytes:Buffer,mime:string):ValidatedPhoto{
- if(!bytes.length||bytes.length>MAX_NOTE_PHOTO_BYTES)invalid();
+export function validateNotePhoto(bytes:Buffer,mime:string,maximum=MAX_NOTE_PHOTO_BYTES):ValidatedPhoto{
+ if(![MAX_NOTE_PHOTO_BYTES,10_000_000].includes(maximum)||!bytes.length||bytes.length>maximum)invalid();
  let width=0,height=0;
  let detected:'image/jpeg'|'image/png';
  if(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))){
