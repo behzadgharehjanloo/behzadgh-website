@@ -13,7 +13,6 @@ export function StudioReadingPreview({draft,image}:{draft:Draft;image?:string}){
     <div className="wj-reading-text">
      <p className="wj-position">Private draft · Reading preview</p>
      <h1>{draft.title||'Untitled Note'}</h1>
-     <p className="wj-date">Narrated by {draft.narrator}</p>
      <div className="wj-story"><div style={{whiteSpace:'pre-wrap'}}>{draft.body}</div></div>
     </div>
     <figure className="wj-reading-photo">
