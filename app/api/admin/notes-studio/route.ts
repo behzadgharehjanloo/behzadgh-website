@@ -1,7 +1,7 @@
 import {isAdminAuthenticatedReadOnly} from '@/lib/auth';
 import {isSameOriginPost} from '@/lib/request-security';
 import {boundedJson} from '@/lib/request-body';
-import {studioEnabled,saveStudioDraft,scheduleStudioNote,cancelScheduledNote,setStudioPaused,getStudioNote,previewStudioNote} from '@/lib/notes-studio';
+import {studioEnabled,saveStudioDraft,scheduleStudioNote,cancelScheduledNote,setStudioPaused,getStudioNote,listStudioRevisions,previewStudioNote} from '@/lib/notes-studio';
 import {prepareStudioTest,confirmStudioTest} from '@/lib/notes-studio-test';
 import {publishDueNotes,dispatchStudioEmails} from '@/lib/notes-studio-worker';
 export const runtime='nodejs';
@@ -18,6 +18,7 @@ export async function POST(request:Request){
  catch{return json({error:'Invalid or oversized request.'},400);}
  try{
   if(body.action==='save')return json({note:await saveStudioDraft(body.draft,body.id,body.revision)});
+  if(body.action==='history')return json({revisions:await listStudioRevisions(body.id)});
   if(body.action==='preview'){
    const note=body.id?await getStudioNote(String(body.id)):null;
    if(!note)throw Error('Save a draft before previewing.');
