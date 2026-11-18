@@ -140,3 +140,29 @@ test('private photographs remain authenticated and separate from public delivery
  assert.match(editor,/PrivatePhotographFraming/);
  assert.match(editor,/Save the private draft and its photograph description/);
 });
+
+test('original Local photo picker is enabled before first save without requiring alt text',()=>{
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ const photo=fs.readFileSync('components/admin/notes/PrivatePhotographFraming.tsx','utf8');
+ const backend=fs.readFileSync('lib/notes-photo-store.ts','utf8');
+ assert.match(editor,/const \[pendingPhoto,setPendingPhoto\]/);
+ assert.match(editor,/disabled=\{!editable\|\|busy\}/);
+ assert.doesNotMatch(editor,/!draft.imageAlt.trim\(\)/);
+ assert.match(editor,/setPendingPhoto\(file\)/);
+ assert.match(editor,/const result=await action\(\{action:'save',id:selection,revision,draft\}\)/);
+ assert.match(editor,/form.set\('photograph',pendingPhoto\)/);
+ assert.match(editor,/incorporate\(upload.note\)/);
+ assert.match(editor,/Selected photograph:/);
+ assert.match(backend,/if\(typeof alt!=='string'\|\|alt.trim\(\).length>250\)/);
+ assert.match(photo,/onPointerDown/);
+ assert.match(photo,/onPointerMove/);
+ assert.match(photo,/setPointerCapture/);
+ assert.match(photo,/ArrowLeft/);
+ assert.match(photo,/ArrowRight/);
+ assert.match(photo,/ArrowUp/);
+ assert.match(photo,/ArrowDown/);
+ assert.match(photo,/Math.min\(3,frame.zoom\+\.1\)/);
+ assert.match(photo,/Math.max\(1,frame.zoom-\.1\)/);
+ assert.match(photo,/value=\{frame.zoom\}/);
+ assert.match(photo,/framing-context|Presentation/);
+});
