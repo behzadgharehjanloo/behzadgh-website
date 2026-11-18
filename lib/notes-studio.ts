@@ -40,17 +40,55 @@ export async function getStudioNote(id:string){
  if(!/^[a-f0-9-]{36}$/i.test(id))return null;
  return (await query<StudioNote>('SELECT * FROM studio_notes WHERE id=$1',[id]))[0]??null;
 }
+// Snapshots are private, immutable and never alter the public Note archive.
+export type StudioRevision={
+ note_id:string;revision:number;slug:string;title:string;body:string;
+ narrator:'Behzad'|'Steven';image_alt:string;excerpt:string;image_caption:string;
+ seo_description:string;saved_at:string;
+};
+export async function listStudioRevisions(noteId:unknown){
+ requireStudio();
+ if(typeof noteId!=='string'||!/^[a-f0-9-]{36}$/i.test(noteId))throw Error('Invalid Note.');
+ const note=await getStudioNote(noteId);
+ if(!note)throw Error('Note not found.');
+ return query<StudioRevision>(
+  `SELECT note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at
+   FROM studio_note_revisions WHERE note_id=$1 ORDER BY revision DESC LIMIT 100`,[noteId]);
+}
+export async function getStudioRevision(noteId:unknown,revision:unknown){
+ requireStudio();
+ if(typeof noteId!=='string'||!/^[a-f0-9-]{36}$/i.test(noteId)||!Number.isSafeInteger(revision)||Number(revision)<1)throw Error('Invalid Note revision.');
+ const note=await getStudioNote(noteId);
+ if(!note)throw Error('Note not found.');
+ return (await query<StudioRevision>(
+  `SELECT note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at
+   FROM studio_note_revisions WHERE note_id=$1 AND revision=$2`,[noteId,revision]))[0]??null;
+}
 export async function saveStudioDraft(input:unknown,id?:unknown,revision?:unknown){
  requireStudio();const draft=validateDraft(input);
  if(typeof id==='string'&&/^[a-f0-9-]{36}$/i.test(id)){
   if(!Number.isInteger(revision))throw new Error('Revision is required.');
-  const rows=await query<StudioNote>(`UPDATE studio_notes SET slug=$2,title=$3,body=$4,image_alt=$5,narrator=$7,excerpt=$8,image_caption=$9,seo_description=$10,revision=revision+1,updated_at=NOW()
-   WHERE id=$1 AND state='draft' AND revision=$6 RETURNING *`,[id,draft.slug,draft.title,draft.body,draft.imageAlt,revision,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
+  const rows=await query<StudioNote>(`WITH changed AS (
+   UPDATE studio_notes SET slug=$2,title=$3,body=$4,image_alt=$5,narrator=$7,excerpt=$8,image_caption=$9,seo_description=$10,revision=revision+1,updated_at=NOW()
+   WHERE id=$1 AND state='draft' AND revision=$6 RETURNING *
+  ), recorded AS (
+   INSERT INTO studio_note_revisions(note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at)
+   SELECT id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,updated_at FROM changed
+   RETURNING note_id,revision
+  ) SELECT changed.* FROM changed JOIN recorded ON recorded.note_id=changed.id AND recorded.revision=changed.revision
+  `,[id,draft.slug,draft.title,draft.body,draft.imageAlt,revision,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
   if(!rows.length)throw new Error('The draft changed or is no longer editable. Reload.');
   return rows[0];
  }
- const rows=await query<StudioNote>(`INSERT INTO studio_notes(id,slug,title,body,image_alt,narrator,excerpt,image_caption,seo_description)
- VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,[randomUUID(),draft.slug,draft.title,draft.body,draft.imageAlt,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
+ const rows=await query<StudioNote>(`WITH created AS (
+   INSERT INTO studio_notes(id,slug,title,body,image_alt,narrator,excerpt,image_caption,seo_description)
+   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *
+  ), recorded AS (
+   INSERT INTO studio_note_revisions(note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at)
+   SELECT id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,updated_at FROM created
+   RETURNING note_id,revision
+  ) SELECT created.* FROM created JOIN recorded ON recorded.note_id=created.id AND recorded.revision=created.revision
+  `,[randomUUID(),draft.slug,draft.title,draft.body,draft.imageAlt,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
  return rows[0];
 }
 export async function scheduleStudioNote(id:unknown,iso:unknown,revision:unknown){
