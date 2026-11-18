@@ -2,13 +2,14 @@ import 'server-only';
 import {randomUUID} from 'node:crypto';
 import {query} from './database';
 import {renderStudioEmail} from './notes-email';
+import {validateFraming,type Framing} from './notes-framing';
 
 export type StudioNote = {
  id:string;slug:string;title:string;body:string;image_alt:string;
  narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;
  state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;
  scheduled_at:string|null;published_at:string|null;revision:number;
- created_at:string;updated_at:string;
+ created_at:string;updated_at:string;photo_id:string|null;photo_framing:Framing|null;
 };
 
 export function studioEnabled(env:NodeJS.ProcessEnv=process.env){
@@ -28,8 +29,9 @@ export function validateDraft(value:unknown){
  const excerpt=typeof v.excerpt==='string'?v.excerpt:'';
  const imageCaption=typeof v.imageCaption==='string'?v.imageCaption:'';
  const seoDescription=typeof v.seoDescription==='string'?v.seoDescription:'';
+ const framing=v.framing==null?null:validateFraming(v.framing);
  if(!title||title.length>160||!slug||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)||!body.trim()||body.length>15000||imageAlt.length>250||excerpt.length>1000||imageCaption.length>1000||seoDescription.length>500)throw new Error('A valid title, slug and authentic Note text are required.');
- return {title,slug,body,imageAlt,narrator,excerpt,imageCaption,seoDescription};
+ return {title,slug,body,imageAlt,narrator,excerpt,imageCaption,seoDescription,framing};
 }
 export async function listStudioNotes(){
  requireStudio();
@@ -44,7 +46,7 @@ export async function getStudioNote(id:string){
 export type StudioRevision={
  note_id:string;revision:number;slug:string;title:string;body:string;
  narrator:'Behzad'|'Steven';image_alt:string;excerpt:string;image_caption:string;
- seo_description:string;saved_at:string;
+ seo_description:string;saved_at:string;photo_id:string|null;photo_framing:Framing|null;
 };
 export async function listStudioRevisions(noteId:unknown){
  requireStudio();
@@ -52,7 +54,7 @@ export async function listStudioRevisions(noteId:unknown){
  const note=await getStudioNote(noteId);
  if(!note)throw Error('Note not found.');
  return query<StudioRevision>(
-  `SELECT note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at
+  `SELECT note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at,photo_id,photo_framing
    FROM studio_note_revisions WHERE note_id=$1 ORDER BY revision DESC LIMIT 100`,[noteId]);
 }
 export async function getStudioRevision(noteId:unknown,revision:unknown){
@@ -69,23 +71,23 @@ export async function saveStudioDraft(input:unknown,id?:unknown,revision?:unknow
  if(typeof id==='string'&&/^[a-f0-9-]{36}$/i.test(id)){
   if(!Number.isInteger(revision))throw new Error('Revision is required.');
   const rows=await query<StudioNote>(`WITH changed AS (
-   UPDATE studio_notes SET slug=$2,title=$3,body=$4,image_alt=$5,narrator=$7,excerpt=$8,image_caption=$9,seo_description=$10,revision=revision+1,updated_at=NOW()
+   UPDATE studio_notes SET slug=$2,title=$3,body=$4,image_alt=$5,narrator=$7,excerpt=$8,image_caption=$9,seo_description=$10,photo_framing=$11::jsonb,revision=revision+1,updated_at=NOW()
    WHERE id=$1 AND state='draft' AND revision=$6 RETURNING *
   ), recorded AS (
-   INSERT INTO studio_note_revisions(note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at)
-   SELECT id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,updated_at FROM changed
+   INSERT INTO studio_note_revisions(note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at,photo_id,photo_framing)
+   SELECT id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,updated_at,photo_id,photo_framing FROM changed
    RETURNING note_id,revision
   ) SELECT changed.* FROM changed JOIN recorded ON recorded.note_id=changed.id AND recorded.revision=changed.revision
-  `,[id,draft.slug,draft.title,draft.body,draft.imageAlt,revision,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
+  `,[id,draft.slug,draft.title,draft.body,draft.imageAlt,revision,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription,draft.framing?JSON.stringify(draft.framing):null]);
   if(!rows.length)throw new Error('The draft changed or is no longer editable. Reload.');
   return rows[0];
  }
  const rows=await query<StudioNote>(`WITH created AS (
-   INSERT INTO studio_notes(id,slug,title,body,image_alt,narrator,excerpt,image_caption,seo_description)
-   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *
+   INSERT INTO studio_notes(id,slug,title,body,image_alt,narrator,excerpt,image_caption,seo_description,photo_framing)
+   VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb) RETURNING *
   ), recorded AS (
-   INSERT INTO studio_note_revisions(note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at)
-   SELECT id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,updated_at FROM created
+   INSERT INTO studio_note_revisions(note_id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,saved_at,photo_id,photo_framing)
+   SELECT id,revision,slug,title,body,narrator,image_alt,excerpt,image_caption,seo_description,updated_at,photo_id,photo_framing FROM created
    RETURNING note_id,revision
   ) SELECT created.* FROM created JOIN recorded ON recorded.note_id=created.id AND recorded.revision=created.revision
   `,[randomUUID(),draft.slug,draft.title,draft.body,draft.imageAlt,draft.narrator,draft.excerpt,draft.imageCaption,draft.seoDescription]);
