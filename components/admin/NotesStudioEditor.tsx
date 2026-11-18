@@ -3,6 +3,7 @@
 import {useEffect, useMemo, useState} from 'react';
 import {StudioReadingPreview} from './notes/StudioReadingPreview';
 import {StudioEmailPreview} from './notes/StudioEmailPreview';
+import {savedTime} from '@/lib/notes-studio-save-time';
 
 type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string};
 type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string};
@@ -170,6 +171,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
       </div>
       <div className="mt-7 flex flex-wrap gap-3 border-t border-[#ded1ba] pt-5">
        <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{const x=await action({action:'save',id:selection,revision,draft});incorporate(x.note);setMessage('Private revision saved. No publication or email sent.');})}>{busy?'Saving…':'Save private draft'}</button>
+       {selection&&savedTime(selected?.updated_at)&&<p className="w-full text-xs leading-6 text-[#766c60]" aria-live="polite"><time dateTime={selected?.updated_at}>{savedTime(selected?.updated_at)}</time><span className="block">Private revision · Nothing published or sent{dirty?' · Unsaved changes remain':''}</span></p>}
       </div>
      </section>
      <section id="studio-panel-website" role="tabpanel" aria-labelledby="studio-tab-website" hidden={editorTab!=='website'} className="pt-6">
