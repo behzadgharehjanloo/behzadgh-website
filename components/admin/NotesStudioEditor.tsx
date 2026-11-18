@@ -98,7 +98,8 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  }
  function choose(n:Note){
   if(!guardUnsaved())return;
-  setPendingPhoto(null);
+  photoValidationController.current?.abort();photoPickNumber.current++;
+  setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');setPhotoReading(false);
   setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??'',framing:n.photo_framing??null};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);
@@ -108,7 +109,8 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  }
  function fresh(){
   if(!guardUnsaved())return;
-  setPendingPhoto(null);
+  photoValidationController.current?.abort();photoPickNumber.current++;
+  setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');setPhotoReading(false);
   setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   setSelection(null);setDraft(blank);setSaved(blank);setRevision(null);setState('draft');setPaused(false);
   setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');setTest(null);setMessage('');setView('notes');
