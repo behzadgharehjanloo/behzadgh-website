@@ -51,3 +51,36 @@ export async function localEmailPhotographPreview(url:string):Promise<string>{
  context.drawImage(picture,0,0,canvas.width,canvas.height);
  return canvas.toDataURL('image/jpeg',0.8);
 }
+
+/** Optimize an oversized local photograph only for the current 3 MiB private
+ * online storage. The user's original file is never modified. The approved
+ * 10 MB original-retention cloud pipeline is still a separate migration. */
+export async function prepareLocalPhotoUpload(file:File):Promise<{file:File;optimized:boolean}>{
+ const limit=3*1024*1024;
+ if(file.size<=limit)return{file,optimized:false};
+ if(file.size>MAX_LOCAL_PHOTO_BYTES)throw Error(REQUIREMENTS);
+ const url=URL.createObjectURL(file);
+ try{
+  const picture=new Image();picture.src=url;await picture.decode();
+  const canvas=document.createElement('canvas');
+  const scale=Math.min(1,3200/picture.naturalWidth,3200/picture.naturalHeight);
+  canvas.width=Math.max(1,Math.round(picture.naturalWidth*scale));
+  canvas.height=Math.max(1,Math.round(picture.naturalHeight*scale));
+  const ctx=canvas.getContext('2d');if(!ctx)throw Error('Photograph processing unavailable in this browser.');
+  ctx.fillStyle='#f5f0e6';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(picture,0,0,canvas.width,canvas.height);
+  const encode=(quality:number)=>new Promise<Blob>((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Photograph conversion failed.')),'image/jpeg',quality));
+  for(let step=0;step<7;step++){
+   for(const quality of [0.85,0.72,0.58]){
+    const blob=await encode(quality);
+    if(blob.size&&blob.size<=limit){
+     return{file:new File([blob],file.name.replace(/\.(jpg|jpeg|png)$/i,'')+'-web.jpg',{type:'image/jpeg'}),optimized:true};
+    }
+   }
+   canvas.width=Math.max(1,Math.floor(canvas.width*.8));
+   canvas.height=Math.max(1,Math.floor(canvas.height*.8));
+   ctx.fillStyle='#f5f0e6';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.drawImage(picture,0,0,canvas.width,canvas.height);
+  }
+  throw Error('Unable to prepare a photograph small enough for online storage.');
+ }finally{URL.revokeObjectURL(url);}
+}
