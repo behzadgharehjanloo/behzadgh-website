@@ -1,11 +1,12 @@
 'use client';
 
-import {useEffect, useMemo, useState} from 'react';
+import {useEffect, useMemo, useRef, useState} from 'react';
 import {StudioReadingPreview} from './notes/StudioReadingPreview';
 import {StudioEmailPreview} from './notes/StudioEmailPreview';
 import {savedTime} from '@/lib/notes-studio-save-time';
 import {PrivatePhotographFraming} from './notes/PrivatePhotographFraming';
 import type {Framing} from '@/lib/notes-framing';
+import {readLocalPhotographPreview,localEmailPhotographPreview,prepareLocalPhotoUpload} from '@/lib/notes-photo-local-preview';
 
 type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string;photo_id:string|null;photo_framing:Framing|null};
 type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string;framing:Framing|null};
@@ -55,16 +56,12 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const [pendingPhoto,setPendingPhoto]=useState<File|null>(null);
  const [pendingPhotoUrl,setPendingPhotoUrl]=useState<string|undefined>();
  const [pendingEmailData,setPendingEmailData]=useState<string|undefined>();
- useEffect(()=>{
-  if(!pendingPhoto){setPendingPhotoUrl(undefined);setPendingEmailData(undefined);return;}
-  const objectUrl=URL.createObjectURL(pendingPhoto);
-  setPendingPhotoUrl(objectUrl);
-  let active=true;
-  const reader=new FileReader();
-  reader.onload=()=>{if(active&&typeof reader.result==='string')setPendingEmailData(reader.result);};
-  reader.readAsDataURL(pendingPhoto);
-  return()=>{active=false;reader.abort();URL.revokeObjectURL(objectUrl);};
- },[pendingPhoto]);
+ const [photoReading,setPhotoReading]=useState(false);
+ const [photoProblem,setPhotoProblem]=useState('');
+ const photoValidationController=useRef<AbortController|null>(null);
+ const photoPickNumber=useRef(0);
+ useEffect(()=>()=>{if(pendingPhotoUrl)URL.revokeObjectURL(pendingPhotoUrl);},[pendingPhotoUrl]);
+ useEffect(()=>()=>photoValidationController.current?.abort(),[]);
  const [history,setHistory]=useState<HistoricalNote[]|null>(null);
  const [historyOpen,setHistoryOpen]=useState(false);
  const [historySelected,setHistorySelected]=useState<number|null>(null);
@@ -122,6 +119,32 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
   const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??'',framing:n.photo_framing??null};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);setState(n.state);setPaused(n.paused);
   setTest(null);
+ }
+ async function selectPhotograph(file:File){
+  const number=++photoPickNumber.current;
+  photoValidationController.current?.abort();
+  const controller=new AbortController();photoValidationController.current=controller;
+  setPhotoProblem('');setPhotoReading(true);
+  setMessage('Checking selected photograph…');
+  try{
+   // The same decoded, dimension-checked 10 MB preview process approved in Local.
+   const url=await readLocalPhotographPreview(file,controller.signal);
+   if(controller.signal.aborted||number!==photoPickNumber.current){URL.revokeObjectURL(url);return;}
+   let emailPreview:string|undefined;
+   try{emailPreview=await localEmailPhotographPreview(url);}catch{emailPreview=undefined;}
+   if(controller.signal.aborted||number!==photoPickNumber.current){URL.revokeObjectURL(url);return;}
+   setPendingPhotoUrl(url);setPendingEmailData(emailPreview);setPendingPhoto(file);
+   setDraft(current=>({...current,framing:null}));
+   setMessage('Photograph checked and loaded. Adjust crop and zoom before Save.');
+   if(file.size>3*1024*1024)setPhotoProblem('This original is larger than current 3 MiB online storage. On Save, an optimized JPEG copy will be stored. Your original file stays unchanged on your computer.');
+  }catch(error){
+   if(number!==photoPickNumber.current||controller.signal.aborted)return;
+   const message=error instanceof Error?error.message:'The photograph could not be read.';
+   setPhotoProblem(message+' Your previously selected photograph remains unchanged.');
+   setMessage(message);
+  }finally{
+   if(number===photoPickNumber.current){setPhotoReading(false);photoValidationController.current=null;}
+  }
  }
  async function run(fn:()=>Promise<void>){
   if(busy)return;
@@ -204,21 +227,17 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
         <p className="mt-2 text-xs leading-5 text-[#606364]">A private saved original. JPEG or PNG, up to 3 MiB and 16 megapixels. Save text and its alt description first; each new photograph creates a preserved revision.</p>
         <div className="mt-4 grid min-h-[185px] place-content-center overflow-hidden border border-dashed border-[#cfc4b0] bg-[#faf6ee] text-center text-sm text-[#606364]">{displayImage?<img className="block max-h-[320px] w-full object-contain" src={displayImage} alt={draft.imageAlt||'Selected photograph'}/>:<span>No photograph selected</span>}</div>
         <label className="mt-5 block text-[13px] font-semibold">Choose photograph
-          <input type="file" accept="image/jpeg,image/png" className={field} disabled={!editable||busy} onChange={e=>{
+          <input type="file" accept="image/jpeg,image/png" className={field} disabled={!editable||busy||photoReading} onChange={e=>{
            const file=e.currentTarget.files?.[0];e.currentTarget.value='';
-           if(!file)return;
-           if(file.size>3*1024*1024||!['image/jpeg','image/png'].includes(file.type)){
-            setMessage('Choose a JPEG or PNG under 3 MiB. Your previous photograph is unchanged.');return;
-           }
-           setPendingPhoto(file);
-           setDraft(v=>({...v,framing:null}));
-           setMessage('Selected photograph: '+file.name+'. Review framing and click Save private draft to store the image.');
+           if(file)void selectPhotograph(file);
           }}/>
         </label>
+        {photoReading&&<p className="mt-2 text-sm font-medium text-[#305267]" role="status">Checking photograph and preparing preview…</p>}
+        {photoProblem&&<p className="mt-2 rounded border border-[#bfa982] bg-[#fff8e8] px-3 py-2 text-sm leading-6 text-[#775125]" role="status">{photoProblem}</p>}
         {pendingPhoto&&<div className="mt-2 rounded border border-[#d9cdbb] bg-[#faf6ee] px-3 py-2 text-xs">
           <p className="font-semibold">Selected photograph: {pendingPhoto.name} · not saved yet</p>
           <p className="mt-1">Click Save private draft to store this image and a new immutable revision.</p>
-          <button className="mt-2 text-[#805c35] underline" type="button" disabled={busy} onClick={()=>setPendingPhoto(null)}>Cancel selected photograph</button>
+          <button className="mt-2 text-[#805c35] underline" type="button" disabled={busy} onClick={()=>{photoValidationController.current?.abort();setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');}}>Cancel selected photograph</button>
         </div>}
         {!selection&&<p className="mt-2 text-xs text-[#8b6030]">You can choose a photograph now; saving creates the Note first.</p>}
         {displayImage&&<PrivatePhotographFraming image={displayImage} value={draft.framing} onChange={framing=>edit('framing',framing)} disabled={!editable||busy}/>}
@@ -236,15 +255,18 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
       </div>
       <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[#ded1ba] pt-5">
        <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{
+        if(photoReading)throw Error('Photograph check is still in progress.');
+        // Prepare the online copy before saving text, minimizing partial saves.
+        const prepared=pendingPhoto?await prepareLocalPhotoUpload(pendingPhoto):null;
         const result=await action({action:'save',id:selection,revision,draft});
-        if(pendingPhoto){
+        if(prepared){
          const form=new FormData();
-         form.set('photograph',pendingPhoto);form.set('noteId',result.note.id);form.set('revision',String(result.note.revision));form.set('alt',draft.imageAlt);
+         form.set('photograph',prepared.file);form.set('noteId',result.note.id);form.set('revision',String(result.note.revision));form.set('alt',draft.imageAlt);
          const response=await fetch('/api/admin/notes-studio/photo',{method:'POST',body:form,credentials:'same-origin',cache:'no-store'});
          const upload=await response.json();
-         if(!response.ok){incorporate(result.note);throw Error((upload.error||'Photograph upload failed.')+' The Note text was saved, but the photo was not. Please choose the photograph again.');}
-         incorporate(upload.note);setPendingPhoto(null);
-         setMessage('Note and photograph saved privately. Nothing published or sent.');
+         if(!response.ok){incorporate(result.note);throw Error((upload.error||'Photograph upload failed.')+' The Note text was saved, but the photo was not. Select the photograph again.');}
+         incorporate(upload.note);setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');
+         setMessage(prepared.optimized?'Private Note saved with an optimized JPEG copy; the original file on your computer is unchanged. Nothing published or sent.':'Note and photograph saved privately. Nothing published or sent.');
         }else{
          incorporate(result.note);setMessage('Private revision saved. No publication or email sent.');
         }
