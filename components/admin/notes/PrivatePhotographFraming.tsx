@@ -8,7 +8,6 @@ export function PrivatePhotographFraming({image,value,onChange,disabled=false}:{
  const framing=value??originalFraming;
  const frame=frameFor(framing,context);
  const change=(patch:Partial<Frame>)=>onChange({...framing,[context]:{...frame,...patch}});
- const clamp=(v:number)=>Math.max(0,Math.min(1,v));
  const crop=size.width&&size.height?cropRectangle(size.width,size.height,frame):null;
  return <details className="mt-5 border-t border-[#ded1ba] pt-4">
   <summary className="cursor-pointer font-serif text-lg">Adjust photograph framing</summary>
@@ -29,7 +28,7 @@ export function PrivatePhotographFraming({image,value,onChange,disabled=false}:{
     </select>
    </label>
    {([['zoom','Zoom',1,3,.01],['x','Horizontal position',0,1,.01],['y','Vertical position',0,1,.01]] as const).map(([key,label,min,max,step])=><label className="block text-xs font-semibold" key={key}>{label} · {key==='zoom'?Math.round(frame.zoom*100)+'%':Math.round(frame[key]*100)+'%'}
-    <input className="mt-2 block w-full" aria-label={label} type="range" min={min} max={max} step={step} value={frame[key]} onChange={e=>change({[key]:clamp(Number(e.target.value))} as Partial<Frame>)}/>
+    <input className="mt-2 block w-full" aria-label={label} type="range" min={min} max={max} step={step} value={frame[key]} onChange={e=>change({[key]:Number(e.target.value)} as Partial<Frame>)}/>
    </label>)}
    <button type="button" className="rounded border border-[#d5c7ae] bg-white px-3 py-2 text-xs" onClick={()=>onChange({...framing,[context]:{...originalFrame}})}>Reset to original framing</button>
   </fieldset>
