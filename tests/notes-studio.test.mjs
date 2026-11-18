@@ -186,3 +186,19 @@ test('finalized Local photo selection validates and decodes images up to 10 MB w
  assert.match(editor,/setPendingPhotoUrl\(url\)/);
  assert.doesNotMatch(editor,/if\(file\.size>3\*1024\*1024\|\|/);
 });
+
+test('the approved Local photo editor is visible immediately with usable zoom buttons',()=>{
+ const framing=fs.readFileSync('components/admin/notes/PrivatePhotographFraming.tsx','utf8');
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ assert.match(framing,/<details open className=/);
+ assert.match(framing,/aria-label="Photograph zoom controls"/);
+ assert.match(framing,/aria-label="Zoom in"/);
+ assert.match(framing,/aria-label="Zoom out"/);
+ assert.match(framing,/Math.min\(3,Math.round\(\(frame.zoom\+0.1\)\*100\)\/100\)/);
+ assert.match(framing,/Math.max\(1,Math.round\(\(frame.zoom-0.1\)\*100\)\/100\)/);
+ assert.match(framing,/Math.round\(frame.zoom\*100\)/);
+ assert.match(framing,/Reset zoom/);
+ assert.match(framing,/onPointerMove/);
+ assert.match(framing,/onKeyDown/);
+ assert.match(editor,/displayImage&&<PrivatePhotographFraming/);
+});

@@ -14,7 +14,7 @@ export function PrivatePhotographFraming({image,value,onChange,disabled=false}:{
  const change=(patch:Partial<Frame>)=>onChange({...framing,[context]:{...frame,...patch}});
  const clamp=(n:number)=>Math.max(0,Math.min(1,n));
  const baseInput='mt-2 w-full rounded border border-[#d5c7ae] bg-white p-2 text-sm';
- return <details className="mt-5 border-t border-[#ded1ba] pt-4">
+ return <details open className="mt-5 border-t border-[#ded1ba] pt-4">
    <summary className="cursor-pointer font-serif text-lg">Adjust photograph</summary>
    <p className="my-3 text-xs leading-5 text-[#675f53]" id="framing-help">Drag to reposition. Arrow keys move the photograph; + and − adjust zoom. Your original stays unchanged.</p>
    <fieldset disabled={disabled} className="space-y-4"><legend className="sr-only">Photograph framing</legend>
@@ -35,6 +35,17 @@ export function PrivatePhotographFraming({image,value,onChange,disabled=false}:{
       <img src={image} draggable={false} alt="Current photograph framing" onLoad={event=>{const img=event.currentTarget;setSize({width:img.naturalWidth,height:img.naturalHeight});}}
        className="pointer-events-none select-none"
        style={crop?{position:'absolute',maxWidth:'none',width:`${size.width/crop.width*100}%`,height:`${size.height/crop.height*100}%`,left:`${-crop.left/crop.width*100}%`,top:`${-crop.top/crop.height*100}%`}:{width:'100%',height:'100%',objectFit:'contain'}}/>
+    </div>
+    <div className="mt-3 flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Photograph zoom controls">
+     <button type="button" aria-label="Zoom out" title="Zoom out" disabled={disabled||frame.zoom<=1}
+      onClick={()=>change({zoom:Math.max(1,Math.round((frame.zoom-0.1)*100)/100)})}
+      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[#c5b69e] bg-[#fffdf9] px-3 text-xl font-semibold text-[#203347] hover:bg-[#f0e8da] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#957749] disabled:cursor-not-allowed disabled:opacity-35">−</button>
+     <output aria-live="polite" aria-label="Current zoom" className="min-w-[68px] text-center text-sm font-semibold tabular-nums text-[#203347]">{Math.round(frame.zoom*100)}%</output>
+     <button type="button" aria-label="Zoom in" title="Zoom in" disabled={disabled||frame.zoom>=3}
+      onClick={()=>change({zoom:Math.min(3,Math.round((frame.zoom+0.1)*100)/100)})}
+      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md border border-[#c5b69e] bg-[#fffdf9] px-3 text-xl font-semibold text-[#203347] hover:bg-[#f0e8da] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#957749] disabled:cursor-not-allowed disabled:opacity-35">+</button>
+     <button type="button" disabled={disabled} onClick={()=>change({zoom:1,x:0.5,y:0.5})}
+      className="min-h-11 rounded-md border border-[#c5b69e] bg-[#fffdf9] px-3 text-xs font-semibold text-[#203347] hover:bg-[#f0e8da] disabled:cursor-not-allowed disabled:opacity-35">Reset zoom</button>
     </div>
     <label className="block text-xs font-semibold">Aspect ratio
      <select className={baseInput} value={frame.ratio} onChange={e=>change({ratio:e.target.value as Frame['ratio']})}>
