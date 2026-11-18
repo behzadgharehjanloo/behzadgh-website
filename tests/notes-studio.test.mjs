@@ -68,7 +68,7 @@ test('private website preview uses actual Local Window Journey structure without
  assert.match(preview,/wj-reading-text/);
  assert.match(preview,/wj-reading-photo/);
  assert.match(preview,/Private draft/);
- assert.match(preview,/Narrated by \{draft.narrator\}/);
+ assert.doesNotMatch(preview,/Narrated by/);
  assert.match(preview,/draft.body/);
  assert.match(preview,/whiteSpace:'pre-wrap'/);
  assert.doesNotMatch(preview,/fetch\(|action\(|POST|sendMail/);
