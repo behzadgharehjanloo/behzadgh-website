@@ -150,7 +150,7 @@ test('original Local photo picker is enabled before first save without requiring
  assert.doesNotMatch(editor,/!draft.imageAlt.trim\(\)/);
  assert.match(editor,/setPendingPhoto\(file\)/);
  assert.match(editor,/const result=await action\(\{action:'save',id:selection,revision,draft\}\)/);
- assert.match(editor,/form.set\('photograph',pendingPhoto\)/);
+ assert.match(editor,/form.set\('photograph',prepared.file\)/);
  assert.match(editor,/incorporate\(upload.note\)/);
  assert.match(editor,/Selected photograph:/);
  assert.match(backend,/if\(typeof alt!=='string'\|\|alt.trim\(\).length>250\)/);
