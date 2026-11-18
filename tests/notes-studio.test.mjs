@@ -103,3 +103,22 @@ test('saved date appears immediately beside the private Save button',()=>{
  assert.match(editor,/min-w-0 flex-1 text-xs/);
  assert.doesNotMatch(editor,/w-full text-xs leading-6 text-\[#766c60\]/);
 });
+
+test('history is append-only and saved atomically with each private Note revision',()=>{
+ const backend=fs.readFileSync('lib/notes-studio.ts','utf8');
+ const migration=fs.readFileSync('db/notes-studio-migrations/0004_private_revision_history.sql','utf8');
+ const route=fs.readFileSync('app/api/admin/notes-studio/route.ts','utf8');
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ assert.match(backend,/WITH changed AS \(/);
+ assert.match(backend,/WITH created AS \(/);
+ assert.match(backend,/INSERT INTO studio_note_revisions/);
+ assert.match(backend,/JOIN recorded ON recorded.note_id/);
+ assert.match(migration,/PRIMARY KEY\(note_id,revision\)/);
+ assert.match(migration,/BEFORE UPDATE OR DELETE ON studio_note_revisions/);
+ assert.match(migration,/ON CONFLICT \(note_id,revision\) DO NOTHING/);
+ assert.match(route,/body.action==='history'/);
+ assert.match(editor,/Revision history/);
+ assert.match(editor,/Read-only historical revision/);
+ assert.match(editor,/View saved revisions/);
+ assert.doesNotMatch(migration,/\b(DROP TABLE|DELETE FROM|UPDATE subscribers|ALTER TABLE subscribers)\b/i);
+});

@@ -7,6 +7,7 @@ import {savedTime} from '@/lib/notes-studio-save-time';
 
 type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string};
 type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string};
+type HistoricalNote={note_id:string;revision:number;title:string;body:string;narrator:'Behzad'|'Steven';saved_at:string;slug:string;image_alt:string;excerpt:string;image_caption:string;seo_description:string};
 type View='notes'|'calendar'|'delivery';
 type Preview='website'|'email';
 const blank:Draft={slug:'',title:'',body:'',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:''};
@@ -48,6 +49,9 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const [test,setTest]=useState<{id:string;recipient:string;subject:string}|null>(null);
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState('');
+ const [history,setHistory]=useState<HistoricalNote[]|null>(null);
+ const [historyOpen,setHistoryOpen]=useState(false);
+ const [historySelected,setHistorySelected]=useState<number|null>(null);
  const [month,setMonth]=useState(()=>{const today=new Date();return new Date(today.getFullYear(),today.getMonth(),1);});
  const selected=notes.find(n=>n.id===selection);
  const dirty=JSON.stringify(draft)!==JSON.stringify(saved);
@@ -71,7 +75,16 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const searched=useMemo(()=>notes.filter(n=>[n.title,n.slug,n.state].join(' ').toLowerCase().includes(search.trim().toLowerCase())),[notes,search]);
  const counts={drafts:notes.filter(n=>n.state==='draft').length,scheduled:notes.filter(n=>n.state==='scheduled').length,published:notes.filter(n=>n.state==='published').length};
  function guardUnsaved(){return !dirty||window.confirm('You have unsaved changes. Leave this draft without saving?');}
+ async function showHistory(){
+  if(!selection)return;
+  setHistoryOpen(true);setHistorySelected(null);
+  await run(async()=>{
+   const result=await action({action:'history',id:selection});
+   setHistory(result.revisions as HistoricalNote[]);
+  });
+ }
  function choose(n:Note){
+  setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   if(!guardUnsaved())return;
   const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);
@@ -80,11 +93,13 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
   setTest(null);setMessage('');setView('notes');
  }
  function fresh(){
+  setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   if(!guardUnsaved())return;
   setSelection(null);setDraft(blank);setSaved(blank);setRevision(null);setState('draft');setPaused(false);
   setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');setTest(null);setMessage('');setView('notes');
  }
  function incorporate(n:Note){
+  setHistory(null);setHistorySelected(null);
   setNotes(prev=>[n,...prev.filter(x=>x.id!==n.id)]);
   const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);setState(n.state);setPaused(n.paused);
@@ -182,6 +197,27 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
       <p className="mb-4 text-xs leading-5 text-[#606364]">Current editor text, including unsaved changes. No email is sent from this preview.</p>
       <StudioEmailPreview draft={draft}/>
      </section>
+     {selection&&<section className="mt-7 border-t border-[#e5daca] pt-5">
+       <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><h4 className="font-serif text-xl">Revision history</h4><p className="mt-1 text-xs text-[#766c60]">Read-only snapshots of successfully saved drafts. Older saves from before history was enabled cannot be reconstructed.</p></div>
+        <button type="button" className={secondary} disabled={busy} onClick={()=>{if(historyOpen){setHistoryOpen(false);}else{void showHistory();}}}>{historyOpen?'Close history':'View saved revisions'}</button>
+       </div>
+       {historyOpen&&<div className="mt-4 grid gap-4 rounded-lg border border-[#ddd1be] bg-[#faf7f1] p-4 md:grid-cols-[minmax(165px,.65fr)_minmax(0,1.35fr)]">
+        <div className="max-h-[340px] space-y-2 overflow-y-auto">
+         {history===null?<p className="text-sm">Loading saved revisions…</p>:history.length===0?<p className="text-sm">No revision snapshots yet.</p>:history.map(item=><button type="button" key={item.revision} onClick={()=>setHistorySelected(item.revision)} aria-pressed={historySelected===item.revision} className={'block w-full rounded border p-3 text-left text-xs '+(historySelected===item.revision?'border-[#967849] bg-[#eee2cd]':'border-[#ded1bf] bg-[#fffdf9] hover:bg-[#f1e9da]')}>
+          <strong className="block text-sm">Revision {item.revision}</strong><span className="mt-1 block">{savedTime(item.saved_at)??'Saved date unavailable'}</span>
+         </button>)}
+        </div>
+        <div className="min-w-0 border-t border-[#ddd1be] pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
+         {history?.find(item=>item.revision===historySelected)?((item)=> <article className="max-h-[400px] overflow-y-auto">
+          <p className="text-xs text-[#766c60]">Read-only historical revision · Narrator: {item.narrator}</p>
+          <h5 className="mt-2 font-serif text-2xl">{item.title}</h5>
+          <div className="mt-4 whitespace-pre-wrap border-t border-[#ddd1be] pt-4 font-serif text-lg leading-[1.7]">{item.body}</div>
+          <p className="mt-5 text-xs text-[#766c60]">This snapshot is immutable. To reuse text, copy it manually into the draft editor.</p>
+         </article>)(history.find(item=>item.revision===historySelected)!):<p className="text-sm text-[#766c60]">Choose a saved revision to review its original text.</p>}
+        </div>
+       </div>}
+     </section>}
      {selection&&editable&&<details className="mt-7 border-t border-[#e5daca] pt-5"><summary className="cursor-pointer font-serif text-xl">Send a test email</summary>
        <p className="mt-3 text-xs text-[#786e61]">One manually entered recipient. Test delivery requires reviewing the exact address and a second confirmation.</p>
        <label className="mt-4 block text-xs font-semibold">Test recipient<input type="email" className={field} value={testEmail} onChange={e=>{setTestEmail(e.target.value);setTest(null);}} disabled={busy} placeholder="your-test-email@example.com"/></label>
