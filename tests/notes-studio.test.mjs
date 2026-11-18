@@ -93,3 +93,13 @@ test('private draft save displays original Local New York date with no invented 
  assert.match(editor,/savedTime\(selected\?\.updated_at\)/);
  assert.match(editor,/dateTime=\{selected\?\.updated_at\}/);
 });
+
+test('saved date appears immediately beside the private Save button',()=>{
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ const save=editor.indexOf("Save private draft");
+ const date=editor.indexOf("savedTime(selected?.updated_at)",save);
+ assert.ok(save>=0&&date>save&&date-save<450);
+ assert.match(editor,/items-center gap-x-5 gap-y-3 border-t/);
+ assert.match(editor,/min-w-0 flex-1 text-xs/);
+ assert.doesNotMatch(editor,/w-full text-xs leading-6 text-\[#766c60\]/);
+});

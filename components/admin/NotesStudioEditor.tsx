@@ -169,9 +169,9 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
         </details>
        </aside>
       </div>
-      <div className="mt-7 flex flex-wrap gap-3 border-t border-[#ded1ba] pt-5">
+      <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[#ded1ba] pt-5">
        <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{const x=await action({action:'save',id:selection,revision,draft});incorporate(x.note);setMessage('Private revision saved. No publication or email sent.');})}>{busy?'Saving…':'Save private draft'}</button>
-       {selection&&savedTime(selected?.updated_at)&&<p className="w-full text-xs leading-6 text-[#766c60]" aria-live="polite"><time dateTime={selected?.updated_at}>{savedTime(selected?.updated_at)}</time><span className="block">Private revision · Nothing published or sent{dirty?' · Unsaved changes remain':''}</span></p>}
+       {selection&&savedTime(selected?.updated_at)&&<p className="min-w-0 flex-1 text-xs leading-5 text-[#675a48]" aria-live="polite"><time className="font-semibold text-[#203347]" dateTime={selected?.updated_at}>{savedTime(selected?.updated_at)}</time><span className="block text-[#776f63]">Private revision · Nothing published or sent{dirty?' · Unsaved changes remain':''}</span></p>}
       </div>
      </section>
      <section id="studio-panel-website" role="tabpanel" aria-labelledby="studio-tab-website" hidden={editorTab!=='website'} className="pt-6">
