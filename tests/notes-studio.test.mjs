@@ -96,7 +96,7 @@ test('private draft save displays original Local New York date with no invented 
 
 test('saved date appears immediately beside the private Save button',()=>{
  const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
- const save=editor.indexOf("Save private draft");
+ const save=editor.lastIndexOf("Save private draft");
  const date=editor.indexOf("savedTime(selected?.updated_at)",save);
  assert.ok(save>=0&&date>save&&date-save<2600);
  assert.match(editor,/items-center gap-x-5 gap-y-3 border-t/);
