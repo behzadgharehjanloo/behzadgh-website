@@ -244,6 +244,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
          {history?.find(item=>item.revision===historySelected)?((item)=> <article className="max-h-[400px] overflow-y-auto">
           <p className="text-xs text-[#766c60]">Read-only historical revision · Narrator: {item.narrator}</p>
           <h5 className="mt-2 font-serif text-2xl">{item.title}</h5>
+          {item.photo_id&&<img className="mt-3 max-h-[220px] max-w-full object-contain" src={'/api/admin/notes-studio/photo?noteId='+encodeURIComponent(item.note_id)+'&assetId='+encodeURIComponent(item.photo_id)} alt={item.image_alt}/>}
           <div className="mt-4 whitespace-pre-wrap border-t border-[#ddd1be] pt-4 font-serif text-lg leading-[1.7]">{item.body}</div>
           <p className="mt-5 text-xs text-[#766c60]">This snapshot is immutable. To reuse text, copy it manually into the draft editor.</p>
          </article>)(history.find(item=>item.revision===historySelected)!):<p className="text-sm text-[#766c60]">Choose a saved revision to review its original text.</p>}
