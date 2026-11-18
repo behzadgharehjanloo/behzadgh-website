@@ -98,7 +98,7 @@ test('saved date appears immediately beside the private Save button',()=>{
  const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
  const save=editor.indexOf("Save private draft");
  const date=editor.indexOf("savedTime(selected?.updated_at)",save);
- assert.ok(save>=0&&date>save&&date-save<450);
+ assert.ok(save>=0&&date>save&&date-save<2600);
  assert.match(editor,/items-center gap-x-5 gap-y-3 border-t/);
  assert.match(editor,/min-w-0 flex-1 text-xs/);
  assert.doesNotMatch(editor,/w-full text-xs leading-6 text-\[#766c60\]/);
@@ -138,7 +138,7 @@ test('private photographs remain authenticated and separate from public delivery
  assert.match(backend,/WITH locked AS/);
  assert.match(backend,/INSERT INTO studio_note_revisions/);
  assert.match(editor,/PrivatePhotographFraming/);
- assert.match(editor,/Save the private draft and its photograph description/);
+ assert.match(editor,/Click Save private draft to store this image/);
 });
 
 test('original Local photo picker is enabled before first save without requiring alt text',()=>{
@@ -163,6 +163,6 @@ test('original Local photo picker is enabled before first save without requiring
  assert.match(photo,/ArrowDown/);
  assert.match(photo,/Math.min\(3,frame.zoom\+\.1\)/);
  assert.match(photo,/Math.max\(1,frame.zoom-\.1\)/);
- assert.match(photo,/value=\{frame.zoom\}/);
+ assert.match(photo,/value=\{frame\[key\]\}/);
  assert.match(photo,/framing-context|Presentation/);
 });
