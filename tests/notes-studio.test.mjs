@@ -60,3 +60,18 @@ test('original local editor protects unsaved text and keyboard preview tabs',()=
  assert.match(editor,/event.key==='End'/);
  assert.match(editor,/tabIndex=\{editorTab===key\?0:-1\}/);
 });
+
+test('private website preview uses actual Local Window Journey structure without changing raw text',()=>{
+ const preview=fs.readFileSync('components/admin/notes/StudioReadingPreview.tsx','utf8');
+ const css=fs.readFileSync('components/admin/notes/original-window-journey.css','utf8');
+ assert.match(preview,/wj-reading-layout/);
+ assert.match(preview,/wj-reading-text/);
+ assert.match(preview,/wj-reading-photo/);
+ assert.match(preview,/Private draft/);
+ assert.match(preview,/Narrated by \{draft.narrator\}/);
+ assert.match(preview,/draft.body/);
+ assert.match(preview,/whiteSpace:'pre-wrap'/);
+ assert.doesNotMatch(preview,/fetch\(|action\(|POST|sendMail/);
+ assert.match(css,/grid-template-columns:minmax\(0,1.45fr\)/);
+ assert.match(css,/studio-window-journey/);
+});
