@@ -14,7 +14,7 @@ export function validateNotePhoto(bytes:Buffer,mime:string):ValidatedPhoto{
   detected='image/png';
   if(bytes.length<45||bytes.toString('ascii',12,16)!=='IHDR'||bytes.readUInt32BE(8)!==13)invalid();
   width=bytes.readUInt32BE(16);height=bytes.readUInt32BE(20);validSize(width,height);
-  if(bytes[28]!==0||bytes[26]!==0||bytes[27]!==0||bytes[29]!==0)invalid(); // compression, filter, interlace, invalid flags
+  if(bytes[28]!==0||bytes[26]!==0||bytes[27]!==0)invalid(); // compression, filter, interlace, invalid flags
   if(![0,2,3,4,6].includes(bytes[25]))invalid();
   if(!bytes.subarray(bytes.length-12,bytes.length-8).equals(Buffer.from([0,0,0,0]))||bytes.toString('ascii',bytes.length-8,bytes.length-4)!=='IEND')invalid();
  }else if(bytes[0]===255&&bytes[1]===216){
