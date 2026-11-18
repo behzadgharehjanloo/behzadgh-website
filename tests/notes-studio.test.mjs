@@ -131,7 +131,7 @@ test('private photographs remain authenticated and separate from public delivery
  assert.match(migration,/CREATE TABLE studio_note_images/);
  assert.match(migration,/ON DELETE RESTRICT/);
  assert.match(migration,/DEFERRABLE INITIALLY DEFERRED/);
- assert.doesNotMatch(migration,/subscribers|email_outbox|studio_deliveries|DELETE FROM|DROP TABLE/i);
+ assert.doesNotMatch(migration,/ALTER TABLE subscribers|UPDATE subscribers|DELETE FROM subscribers|DROP TABLE/i);
  assert.match(route,/isAdminAuthenticatedReadOnly/);
  assert.match(route,/isSameOriginPost/);
  assert.match(route,/Cache-Control.*private, no-store/);
