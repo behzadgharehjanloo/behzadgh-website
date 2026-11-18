@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {query} from './database';
 import {requireStudio, type StudioNote} from './notes-studio';
 import {validateNotePhoto} from './notes-photo-validation';
+import {signPrivatePhoto} from './notes-cloud-s3';
 
 // Private BYTEA mode from the first Local Studio prototype.
 // Public serving and campaign attachments are intentionally NOT wired up.
@@ -33,8 +34,11 @@ export async function saveStudioPhotograph(noteId:unknown,revision:unknown,bytes
 export async function readStudioPhotograph(noteId:unknown,assetId:unknown){
  requireStudio();
  if(typeof noteId!=='string'||typeof assetId!=='string'||!/^[a-f0-9-]{36}$/i.test(noteId)||!/^[a-f0-9-]{36}$/i.test(assetId))return null;
- const rows=await query<{mime_type:string;hex:string}>(`SELECT mime_type,encode(bytes,'hex') AS hex
-  FROM studio_note_images WHERE note_id=$1::uuid AND id=$2::uuid LIMIT 1`,[noteId,assetId]);
+ const rows=await query<{mime_type:string;hex:string|null;storage_key:string|null}>(`SELECT mime_type,
+ CASE WHEN bytes IS NULL THEN NULL ELSE encode(bytes,'hex') END AS hex,storage_key
+ FROM studio_note_images WHERE note_id=$1::uuid AND id=$2::uuid LIMIT 1`,[noteId,assetId]);
  if(!rows[0])return null;
+ if(rows[0].storage_key)return{mimeType:rows[0].mime_type,cloudUrl:signPrivatePhoto(rows[0].storage_key,'GET',undefined,60)};
+ if(!rows[0].hex)return null;
  return {mimeType:rows[0].mime_type,bytes:Buffer.from(rows[0].hex,'hex')};
 }

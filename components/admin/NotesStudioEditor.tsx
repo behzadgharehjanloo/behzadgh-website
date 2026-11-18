@@ -32,7 +32,7 @@ async function action(payload:Record<string,unknown>){
  return data;
 }
 
-export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:Note[];deliveryEnabled:boolean}){
+export function NotesStudioEditor({initialNotes,deliveryEnabled,cloudPhotosEnabled}:{initialNotes:Note[];deliveryEnabled:boolean;cloudPhotosEnabled:boolean}){
  const [notes,setNotes]=useState(initialNotes);
  const [view,setView]=useState<View>('notes');
  const [selection,setSelection]=useState<string|null>(null);
@@ -138,7 +138,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
    setPendingPhotoUrl(url);setPendingEmailData(emailPreview);setPendingPhoto(file);
    setDraft(current=>({...current,framing:null}));
    setMessage('Photograph checked and loaded. Adjust crop and zoom before Save.');
-   if(file.size>3*1024*1024)setPhotoProblem('This original is larger than current 3 MiB online storage. On Save, an optimized JPEG copy will be stored. Your original file stays unchanged on your computer.');
+   if(!cloudPhotosEnabled&&file.size>3*1024*1024)setPhotoProblem('Cloud original storage is not yet enabled. For now an optimized copy is stored, while your original stays unchanged on your computer.');
   }catch(error){
    if(number!==photoPickNumber.current||controller.signal.aborted)return;
    const message=error instanceof Error?error.message:'The photograph could not be read.';
@@ -226,7 +226,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
        </div>
        <aside className="min-w-0 border-t border-[#ded1ba] pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
         <h4 className="font-serif text-2xl font-normal">Photograph</h4>
-        <p className="mt-2 text-xs leading-5 text-[#606364]">A private saved original. JPEG or PNG, up to 3 MiB and 16 megapixels. Save text and its alt description first; each new photograph creates a preserved revision.</p>
+        <p className="mt-2 text-xs leading-5 text-[#606364]">Choose a JPEG or PNG up to 10 MB (16 megapixels). When cloud storage is enabled the full original is saved privately, and framing is kept with each Note revision.</p>
         <div className="mt-4 grid min-h-[185px] place-content-center overflow-hidden border border-dashed border-[#cfc4b0] bg-[#faf6ee] text-center text-sm text-[#606364]">{displayImage?<img className="block max-h-[320px] w-full object-contain" src={displayImage} alt={draft.imageAlt||'Selected photograph'}/>:<span>No photograph selected</span>}</div>
         <label className="mt-5 block text-[13px] font-semibold">Choose photograph
           <input type="file" accept="image/jpeg,image/png" className={field} disabled={!editable||busy||photoReading} onChange={e=>{
@@ -259,16 +259,33 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
        <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{
         if(photoReading)throw Error('Photograph check is still in progress.');
         // Prepare the online copy before saving text, minimizing partial saves.
-        const prepared=pendingPhoto?await prepareLocalPhotoUpload(pendingPhoto):null;
+        // Before saving Note text, prepare only the legacy copy if cloud is unavailable.
+        const prepared=pendingPhoto&&!cloudPhotosEnabled?await prepareLocalPhotoUpload(pendingPhoto):null;
+        const hash=pendingPhoto&&cloudPhotosEnabled?Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await pendingPhoto.arrayBuffer()))).map(v=>v.toString(16).padStart(2,'0')).join(''):null;
         const result=await action({action:'save',id:selection,revision,draft});
-        if(prepared){
+        if(pendingPhoto&&cloudPhotosEnabled&&hash){
+         try{
+          const beginResponse=await fetch('/api/admin/notes-studio/photo/cloud',{method:'POST',credentials:'same-origin',cache:'no-store',
+           headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'begin',noteId:result.note.id,revision:result.note.revision,size:pendingPhoto.size,mime:pendingPhoto.type,sha256:hash})});
+          const begin=await beginResponse.json();
+          if(!beginResponse.ok)throw Error(begin.error||'Private original upload authorization failed.');
+          const uploaded=await fetch(begin.url,{method:'PUT',headers:{'Content-Type':pendingPhoto.type},body:pendingPhoto});
+          if(!uploaded.ok)throw Error('The original image could not be uploaded to private storage.');
+          const finishResponse=await fetch('/api/admin/notes-studio/photo/cloud',{method:'POST',credentials:'same-origin',cache:'no-store',
+           headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'finalize',uploadId:begin.uploadId,noteId:result.note.id,alt:draft.imageAlt})});
+          const finish=await finishResponse.json();
+          if(!finishResponse.ok)throw Error(finish.error||'The original image was uploaded but could not be attached.');
+          incorporate(finish.note);setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');
+          setMessage('Full original photograph saved in private cloud storage with a new immutable revision. No email sent.');
+         }catch(error){incorporate(result.note);throw Error((error instanceof Error?error.message:'Photograph upload failed')+' The Note text was saved, but the image was not attached. Re-select the photo and try again.');}
+        }else if(prepared){
          const form=new FormData();
          form.set('photograph',prepared.file);form.set('noteId',result.note.id);form.set('revision',String(result.note.revision));form.set('alt',draft.imageAlt);
          const response=await fetch('/api/admin/notes-studio/photo',{method:'POST',body:form,credentials:'same-origin',cache:'no-store'});
          const upload=await response.json();
          if(!response.ok){incorporate(result.note);throw Error((upload.error||'Photograph upload failed.')+' The Note text was saved, but the photo was not. Select the photograph again.');}
          incorporate(upload.note);setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');
-         setMessage(prepared.optimized?'Private Note saved with an optimized JPEG copy; the original file on your computer is unchanged. Nothing published or sent.':'Note and photograph saved privately. Nothing published or sent.');
+         setMessage(prepared.optimized?'Private Note saved with an optimized JPEG copy; original file on computer unchanged. Nothing sent.':'Note and photograph saved privately. Nothing published or sent.');
         }else{
          incorporate(result.note);setMessage('Private revision saved. No publication or email sent.');
         }

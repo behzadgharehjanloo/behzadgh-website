@@ -14,6 +14,8 @@ export async function GET(request:Request){
  try{
   const photo=await readStudioPhotograph(url.searchParams.get('noteId'),url.searchParams.get('assetId'));
   if(!photo)return json({error:'Photograph unavailable'},404);
+  if('cloudUrl' in photo&&photo.cloudUrl)return Response.redirect(photo.cloudUrl,302);
+  if(!('bytes' in photo)||!photo.bytes)return json({error:'Photograph unavailable'},404);
   return new Response(new Uint8Array(photo.bytes),{status:200,headers:{...headers,'Content-Type':photo.mimeType,'Content-Disposition':'inline','Content-Length':String(photo.bytes.length)}});
  }catch{return json({error:'Photograph unavailable'},404);}
 }

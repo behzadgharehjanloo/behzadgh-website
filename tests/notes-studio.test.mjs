@@ -202,3 +202,35 @@ test('the approved Local photo editor is visible immediately with usable zoom bu
  assert.match(framing,/onKeyDown/);
  assert.match(editor,/displayImage&&<PrivatePhotographFraming/);
 });
+
+test('original 10 MB cloud photos have private short lived tickets and immutable revision binding',()=>{
+ const sig=fs.readFileSync('lib/notes-cloud-s3.ts','utf8');
+ const cloud=fs.readFileSync('lib/notes-cloud-photo.ts','utf8');
+ const migration=fs.readFileSync('db/notes-studio-migrations/0006_private_neon_original_photo_cloud.sql','utf8');
+ const api=fs.readFileSync('app/api/admin/notes-studio/photo/cloud/route.ts','utf8');
+ const ui=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ assert.match(sig,/NOTES_CLOUD_ENABLED==='1'/);
+ assert.match(sig,/EXPECTED_BUCKET='notes-studio-private-originals'/);
+ assert.match(sig,/expires>180/);
+ assert.match(sig,/UNSIGNED-PAYLOAD/);
+ assert.match(api,/isAdminAuthenticatedReadOnly/);
+ assert.match(api,/isSameOriginPost/);
+ assert.match(api,/action==='begin'/);
+ assert.match(api,/action==='finalize'/);
+ assert.match(cloud,/file_size/);
+ assert.match(cloud,/10_000_000/);
+ assert.match(cloud,/sha256/);
+ assert.match(cloud,/validateNotePhoto\(bytes,record.mime_type,10_000_000\)/);
+ assert.match(cloud,/quarantine/);
+ assert.match(cloud,/putImmutableOriginal/);
+ assert.match(cloud,/FOR UPDATE OF n,u/);
+ assert.match(cloud,/INSERT INTO studio_note_revisions/);
+ assert.match(migration,/ALTER COLUMN bytes DROP NOT NULL/);
+ assert.match(migration,/bytes IS NOT NULL/);
+ assert.match(migration,/bytes IS NULL/);
+ assert.doesNotMatch(migration,/DROP TABLE|UPDATE subscribers|DELETE FROM subscribers/);
+ assert.match(ui,/crypto.subtle.digest\('SHA-256'/);
+ assert.match(ui,/action:'begin'/);
+ assert.match(ui,/action:'finalize'/);
+ assert.match(ui,/method:'PUT'/);
+});
