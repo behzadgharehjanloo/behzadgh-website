@@ -166,3 +166,23 @@ test('original Local photo picker is enabled before first save without requiring
  assert.match(photo,/value=\{frame\[key\]\}/);
  assert.match(photo,/framing-context|Presentation/);
 });
+
+test('finalized Local photo selection validates and decodes images up to 10 MB with visible failures',()=>{
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ const local=fs.readFileSync('lib/notes-photo-local-preview.ts','utf8');
+ assert.match(local,/MAX_LOCAL_PHOTO_BYTES=10_000_000/);
+ assert.match(local,/file\.slice\(0,1_048_576\)/);
+ assert.match(local,/width\*height>16_000_000/);
+ assert.match(local,/URL\.createObjectURL\(file\)/);
+ assert.match(local,/picture\.onerror/);
+ assert.match(local,/signal\.aborted/);
+ assert.match(local,/prepareLocalPhotoUpload/);
+ assert.match(local,/blob\.size<=limit/);
+ assert.match(editor,/readLocalPhotographPreview\(file,controller\.signal\)/);
+ assert.match(editor,/localEmailPhotographPreview\(url\)/);
+ assert.match(editor,/role="status">\{photoProblem\}/);
+ assert.match(editor,/prepareLocalPhotoUpload\(pendingPhoto\)/);
+ assert.match(editor,/Photo text was saved|Note text was saved/);
+ assert.match(editor,/setPendingPhotoUrl\(url\)/);
+ assert.doesNotMatch(editor,/if\(file\.size>3\*1024\*1024\|\|/);
+});
