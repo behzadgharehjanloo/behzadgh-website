@@ -75,3 +75,21 @@ test('private website preview uses actual Local Window Journey structure without
  assert.match(css,/grid-template-columns:minmax\(0,1.45fr\)/);
  assert.match(css,/studio-window-journey/);
 });
+
+test('reader preview does not expose narrator on website or mobile',()=>{
+ const preview=fs.readFileSync('components/admin/notes/StudioReadingPreview.tsx','utf8');
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ assert.doesNotMatch(preview,/Narrated by|\{draft\.narrator\}/);
+ assert.match(editor,/Narrator<select/);
+ assert.match(editor,/StudioReadingPreview draft=\{draft\}/);
+});
+test('private draft save displays original Local New York date with no invented timestamp',()=>{
+ const time=loadProject('lib/notes-studio-save-time.ts');
+ assert.equal(time.savedTime('2026-11-18T17:00:00.000Z'),'Saved November 18, 2026 at 12:00 PM EST');
+ assert.equal(time.savedTime('2026-07-20T16:30:00.000Z'),'Saved July 20, 2026 at 12:30 PM EDT');
+ assert.equal(time.savedTime(undefined),null);
+ assert.equal(time.savedTime('garbled'),null);
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ assert.match(editor,/savedTime\(selected\?\.updated_at\)/);
+ assert.match(editor,/dateTime=\{selected\?\.updated_at\}/);
+});
