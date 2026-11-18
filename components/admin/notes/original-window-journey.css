@@ -1,0 +1,25 @@
+/* Preserves the original Local Window Journey reading preview, scoped to private Studio. */
+.studio-window-journey .wj-reading {color:#0b1620;max-width:1120px;margin:0 auto;padding:10px 32px 38px}
+.studio-window-journey .wj-reading-nav{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;font-size:13px;line-height:1.5}
+.studio-window-journey .wj-reading-nav>:last-child{justify-self:end;text-align:right}
+.studio-window-journey .wj-reading-nav-top{padding-bottom:6px;border-bottom:1px solid #ded1ba}
+.studio-window-journey .wj-reading-nav-bottom{margin-top:24px;padding-top:9px;border-top:1px solid #ded1ba}
+.studio-window-journey .wj-reading-layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);align-items:start;gap:clamp(32px,5vw,68px);margin-top:18px}
+.studio-window-journey .wj-reading-text{min-width:0}
+.studio-window-journey .wj-position{font-size:10px;line-height:1.7;color:#6c5937;letter-spacing:.1em;text-transform:uppercase}
+.studio-window-journey .wj-reading h1{margin-top:7px;font-family:var(--font-serif),Georgia,serif;font-size:clamp(36px,3.6vw,48px);line-height:1.15;font-weight:400;letter-spacing:-.02em;overflow-wrap:anywhere}
+.studio-window-journey .wj-date{font-size:12px;color:#70603f}
+.studio-window-journey .wj-story{margin-top:21px;font-family:var(--font-serif),Georgia,serif;font-size:21px;line-height:1.7;overflow-wrap:anywhere}
+.studio-window-journey .wj-story p{margin:0;white-space:pre-wrap}
+.studio-window-journey .wj-story p+p{margin-top:.72em}
+.studio-window-journey .wj-reading-photo{width:min(100%,340px);margin:0 auto}
+.studio-window-journey .wj-photo{display:block;width:100%;height:auto;object-fit:contain}
+.studio-window-journey .wj-memory-photo{mask-image:linear-gradient(to right,rgba(0,0,0,.94),#000 10%)}
+.studio-window-journey .wj-reading-photo figcaption{margin-top:8px;font-size:10px;line-height:1.6;color:#67645d}
+@media(max-width:767px){
+ .studio-window-journey .wj-reading{padding:8px 22px 36px}
+ .studio-window-journey .wj-reading-nav{gap:8px;font-size:12px}
+ .studio-window-journey .wj-reading-layout{grid-template-columns:1fr;gap:30px}
+ .studio-window-journey .wj-story{font-size:20px;line-height:1.8}
+ .studio-window-journey .wj-reading-photo{width:min(100%,300px)}
+}
