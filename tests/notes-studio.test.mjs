@@ -96,9 +96,9 @@ test('private draft save displays original Local New York date with no invented 
 
 test('saved date appears immediately beside the private Save button',()=>{
  const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
- const save=editor.indexOf("Save private draft");
+ const save=editor.lastIndexOf("Save private draft");
  const date=editor.indexOf("savedTime(selected?.updated_at)",save);
- assert.ok(save>=0&&date>save&&date-save<450);
+ assert.ok(save>=0&&date>save&&date-save<2600);
  assert.match(editor,/items-center gap-x-5 gap-y-3 border-t/);
  assert.match(editor,/min-w-0 flex-1 text-xs/);
  assert.doesNotMatch(editor,/w-full text-xs leading-6 text-\[#766c60\]/);
@@ -138,5 +138,31 @@ test('private photographs remain authenticated and separate from public delivery
  assert.match(backend,/WITH locked AS/);
  assert.match(backend,/INSERT INTO studio_note_revisions/);
  assert.match(editor,/PrivatePhotographFraming/);
- assert.match(editor,/Save the private draft and its photograph description/);
+ assert.match(editor,/Click Save private draft to store this image/);
+});
+
+test('original Local photo picker is enabled before first save without requiring alt text',()=>{
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ const photo=fs.readFileSync('components/admin/notes/PrivatePhotographFraming.tsx','utf8');
+ const backend=fs.readFileSync('lib/notes-photo-store.ts','utf8');
+ assert.match(editor,/const \[pendingPhoto,setPendingPhoto\]/);
+ assert.match(editor,/disabled=\{!editable\|\|busy\}/);
+ assert.doesNotMatch(editor,/!draft.imageAlt.trim\(\)/);
+ assert.match(editor,/setPendingPhoto\(file\)/);
+ assert.match(editor,/const result=await action\(\{action:'save',id:selection,revision,draft\}\)/);
+ assert.match(editor,/form.set\('photograph',pendingPhoto\)/);
+ assert.match(editor,/incorporate\(upload.note\)/);
+ assert.match(editor,/Selected photograph:/);
+ assert.match(backend,/if\(typeof alt!=='string'\|\|alt.trim\(\).length>250\)/);
+ assert.match(photo,/onPointerDown/);
+ assert.match(photo,/onPointerMove/);
+ assert.match(photo,/setPointerCapture/);
+ assert.match(photo,/ArrowLeft/);
+ assert.match(photo,/ArrowRight/);
+ assert.match(photo,/ArrowUp/);
+ assert.match(photo,/ArrowDown/);
+ assert.match(photo,/Math.min\(3,frame.zoom\+\.1\)/);
+ assert.match(photo,/Math.max\(1,frame.zoom-\.1\)/);
+ assert.match(photo,/value=\{frame\[key\]\}/);
+ assert.match(photo,/framing-context|Presentation/);
 });

@@ -10,7 +10,7 @@ export async function saveStudioPhotograph(noteId:unknown,revision:unknown,bytes
  requireStudio();
  if(typeof noteId!=='string'||!/^[a-f0-9-]{36}$/i.test(noteId)||!Number.isSafeInteger(revision)||Number(revision)<1)
   throw Error('Save the Note before uploading its photograph.');
- if(typeof alt!=='string'||!alt.trim()||alt.trim().length>250)throw Error('Add a short photograph description before uploading.');
+ if(typeof alt!=='string'||alt.trim().length>250)throw Error('Photograph description must be 250 characters or fewer.');
  const photo=validateNotePhoto(bytes,mime);
  const assetId=randomUUID();
  const rows=await query<StudioNote>(`WITH locked AS (

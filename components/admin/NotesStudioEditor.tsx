@@ -52,12 +52,25 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState('');
  const [emailImage,setEmailImage]=useState<string|undefined>(undefined);
+ const [pendingPhoto,setPendingPhoto]=useState<File|null>(null);
+ const [pendingPhotoUrl,setPendingPhotoUrl]=useState<string|undefined>();
+ const [pendingEmailData,setPendingEmailData]=useState<string|undefined>();
+ useEffect(()=>{
+  if(!pendingPhoto){setPendingPhotoUrl(undefined);setPendingEmailData(undefined);return;}
+  const objectUrl=URL.createObjectURL(pendingPhoto);
+  setPendingPhotoUrl(objectUrl);
+  let active=true;
+  const reader=new FileReader();
+  reader.onload=()=>{if(active&&typeof reader.result==='string')setPendingEmailData(reader.result);};
+  reader.readAsDataURL(pendingPhoto);
+  return()=>{active=false;reader.abort();URL.revokeObjectURL(objectUrl);};
+ },[pendingPhoto]);
  const [history,setHistory]=useState<HistoricalNote[]|null>(null);
  const [historyOpen,setHistoryOpen]=useState(false);
  const [historySelected,setHistorySelected]=useState<number|null>(null);
  const [month,setMonth]=useState(()=>{const today=new Date();return new Date(today.getFullYear(),today.getMonth(),1);});
  const selected=notes.find(n=>n.id===selection);
- const dirty=JSON.stringify(draft)!==JSON.stringify(saved);
+ const dirty=JSON.stringify(draft)!==JSON.stringify(saved)||pendingPhoto!==null;
  // Parity with the verified local NoteEditor: protect unsaved memoir text.
  useEffect(()=>{
   if(!dirty)return;
@@ -87,8 +100,9 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
   });
  }
  function choose(n:Note){
-  setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   if(!guardUnsaved())return;
+  setPendingPhoto(null);
+  setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??'',framing:n.photo_framing??null};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);
   setState(n.state);setPaused(n.paused);setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');
@@ -96,8 +110,9 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
   setTest(null);setMessage('');setView('notes');
  }
  function fresh(){
-  setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   if(!guardUnsaved())return;
+  setPendingPhoto(null);
+  setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   setSelection(null);setDraft(blank);setSaved(blank);setRevision(null);setState('draft');setPaused(false);
   setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');setTest(null);setMessage('');setView('notes');
  }
@@ -120,6 +135,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
   setView(next);setMessage('');
  }
  const url=selection?'/notes/'+(selected?.slug??draft.slug):'';
+ const displayImage=pendingPhotoUrl??(selection&&selected?.photo_id?'/api/admin/notes-studio/photo?noteId='+encodeURIComponent(selection)+'&assetId='+encodeURIComponent(selected.photo_id):undefined);
  const imageUrl=selection&&selected?.photo_id?'/api/admin/notes-studio/photo?noteId='+encodeURIComponent(selection)+'&assetId='+encodeURIComponent(selected.photo_id):undefined;
  useEffect(()=>{
   setEmailImage(undefined);
@@ -186,26 +202,28 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
        <aside className="min-w-0 border-t border-[#ded1ba] pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
         <h4 className="font-serif text-2xl font-normal">Photograph</h4>
         <p className="mt-2 text-xs leading-5 text-[#606364]">A private saved original. JPEG or PNG, up to 3 MiB and 16 megapixels. Save text and its alt description first; each new photograph creates a preserved revision.</p>
-        <div className="mt-4 grid min-h-[185px] place-content-center overflow-hidden border border-dashed border-[#cfc4b0] bg-[#faf6ee] text-center text-sm text-[#606364]">{imageUrl?<img className="block max-h-[320px] w-full object-contain" src={imageUrl} alt={draft.imageAlt||'Saved photograph'}/>:<span>No photograph selected</span>}</div>
+        <div className="mt-4 grid min-h-[185px] place-content-center overflow-hidden border border-dashed border-[#cfc4b0] bg-[#faf6ee] text-center text-sm text-[#606364]">{displayImage?<img className="block max-h-[320px] w-full object-contain" src={displayImage} alt={draft.imageAlt||'Selected photograph'}/>:<span>No photograph selected</span>}</div>
         <label className="mt-5 block text-[13px] font-semibold">Choose photograph
-          <input type="file" accept="image/jpeg,image/png" className={field} disabled={!selection||!editable||busy||dirty||!draft.imageAlt.trim()} onChange={e=>{
-           const photo=e.currentTarget.files?.[0];e.currentTarget.value='';
-           if(!photo||!selection||revision===null)return;
-           void run(async()=>{
-            if(photo.size>3*1024*1024||!['image/jpeg','image/png'].includes(photo.type))throw Error('Choose a JPEG or PNG up to 3 MiB.');
-            const form=new FormData();form.set('photograph',photo);form.set('noteId',selection);form.set('revision',String(revision));form.set('alt',draft.imageAlt);
-            const response=await fetch('/api/admin/notes-studio/photo',{method:'POST',body:form,credentials:'same-origin',cache:'no-store'});
-            const result=await response.json();
-            if(!response.ok)throw Error(result.error||'Photograph upload failed.');
-            incorporate(result.note);setMessage('Private photograph saved with a new revision. No email sent.');
-           });
+          <input type="file" accept="image/jpeg,image/png" className={field} disabled={!editable||busy} onChange={e=>{
+           const file=e.currentTarget.files?.[0];e.currentTarget.value='';
+           if(!file)return;
+           if(file.size>3*1024*1024||!['image/jpeg','image/png'].includes(file.type)){
+            setMessage('Choose a JPEG or PNG under 3 MiB. Your previous photograph is unchanged.');return;
+           }
+           setPendingPhoto(file);
+           setDraft(v=>({...v,framing:null}));
+           setMessage('Selected photograph: '+file.name+'. Review framing and click Save private draft to store the image.');
           }}/>
         </label>
-        {(!selection||dirty)&&<p className="mt-2 text-xs text-[#8b6030]">Save the private draft and its photograph description before selecting a photo.</p>}
-        {imageUrl&&<PrivatePhotographFraming image={imageUrl} value={draft.framing} onChange={framing=>edit('framing',framing)} disabled={!editable||busy}/>}
-
+        {pendingPhoto&&<div className="mt-2 rounded border border-[#d9cdbb] bg-[#faf6ee] px-3 py-2 text-xs">
+          <p className="font-semibold">Selected photograph: {pendingPhoto.name} · not saved yet</p>
+          <p className="mt-1">Click Save private draft to store this image and a new immutable revision.</p>
+          <button className="mt-2 text-[#805c35] underline" type="button" disabled={busy} onClick={()=>setPendingPhoto(null)}>Cancel selected photograph</button>
+        </div>}
+        {!selection&&<p className="mt-2 text-xs text-[#8b6030]">You can choose a photograph now; saving creates the Note first.</p>}
+        {displayImage&&<PrivatePhotographFraming image={displayImage} value={draft.framing} onChange={framing=>edit('framing',framing)} disabled={!editable||busy}/>}
         <label className="mt-4 block text-[13px] font-semibold">Photograph alt text<textarea className={field} rows={3} maxLength={250} disabled={!editable||busy} value={draft.imageAlt} onChange={e=>edit('imageAlt',e.target.value)}/></label>
-        <p className="mt-1 text-xs leading-5 text-[#606364]">Used for accessibility and fallback text.</p>
+        <p className="mt-1 text-xs leading-5 text-[#606364]">Optional, as in the original Local Studio. Used for accessibility and fallback text.</p>
         <details className="mt-5 border-t border-[#ded1ba] pt-5"><summary className="min-h-11 cursor-pointer text-[13px] font-semibold">Advanced / SEO</summary>
          <div className="mt-3 space-y-4">
           <label className="block text-xs font-semibold">Page URL slug<input className={field} value={draft.slug} disabled={!editable||busy} onChange={e=>edit('slug',e.target.value)} placeholder="my-note-title"/></label>
@@ -217,17 +235,30 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
        </aside>
       </div>
       <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-[#ded1ba] pt-5">
-       <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{const x=await action({action:'save',id:selection,revision,draft});incorporate(x.note);setMessage('Private revision saved. No publication or email sent.');})}>{busy?'Saving…':'Save private draft'}</button>
+       <button type="button" className={primary} disabled={!editable||busy} onClick={()=>run(async()=>{
+        const result=await action({action:'save',id:selection,revision,draft});
+        if(pendingPhoto){
+         const form=new FormData();
+         form.set('photograph',pendingPhoto);form.set('noteId',result.note.id);form.set('revision',String(result.note.revision));form.set('alt',draft.imageAlt);
+         const response=await fetch('/api/admin/notes-studio/photo',{method:'POST',body:form,credentials:'same-origin',cache:'no-store'});
+         const upload=await response.json();
+         if(!response.ok){incorporate(result.note);throw Error((upload.error||'Photograph upload failed.')+' The Note text was saved, but the photo was not. Please choose the photograph again.');}
+         incorporate(upload.note);setPendingPhoto(null);
+         setMessage('Note and photograph saved privately. Nothing published or sent.');
+        }else{
+         incorporate(result.note);setMessage('Private revision saved. No publication or email sent.');
+        }
+       })}>{busy?'Saving…':'Save private draft'}</button>
        {selection&&savedTime(selected?.updated_at)&&<p className="min-w-0 flex-1 text-xs leading-5 text-[#675a48]" aria-live="polite"><time className="font-semibold text-[#203347]" dateTime={selected?.updated_at}>{savedTime(selected?.updated_at)}</time><span className="block text-[#776f63]">Private revision · Nothing published or sent{dirty?' · Unsaved changes remain':''}</span></p>}
       </div>
      </section>
      <section id="studio-panel-website" role="tabpanel" aria-labelledby="studio-tab-website" hidden={editorTab!=='website'} className="pt-6">
       <p className="mb-4 text-xs leading-5 text-[#606364]">Current editor text, including unsaved changes. Private preview only.</p>
-      <StudioReadingPreview draft={draft} image={imageUrl}/>
+      <StudioReadingPreview draft={draft} image={displayImage}/>
      </section>
      <section id="studio-panel-email" role="tabpanel" aria-labelledby="studio-tab-email" hidden={editorTab!=='email'} className="pt-6">
       <p className="mb-4 text-xs leading-5 text-[#606364]">Current editor text, including unsaved changes. No email is sent from this preview.</p>
-      <StudioEmailPreview draft={draft} image={emailImage}/>
+      <StudioEmailPreview draft={draft} image={pendingEmailData??emailImage}/>
      </section>
      {selection&&<section className="mt-7 border-t border-[#e5daca] pt-5">
        <div className="flex flex-wrap items-center justify-between gap-3">
