@@ -15,7 +15,7 @@ test('Studio cannot run from Preview, development, or with missing Production op
 });
 test('Note validator requires authentic nonempty content and rejects bad slugs',()=>{
  assert.deepEqual(JSON.parse(JSON.stringify(studio.validateDraft({slug:'my-note',title:' The Window ',body:'A real paragraph.\n\nAnother.',imageAlt:''}))),
- {slug:'my-note',title:'The Window',body:'A real paragraph.\n\nAnother.',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:''});
+ {slug:'my-note',title:'The Window',body:'A real paragraph.\n\nAnother.',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:'',framing:null});
  for(const draft of [
   {slug:'My-Note',title:'Okay',body:'Original'},
   {slug:'valid',title:'',body:'Original'},
@@ -121,4 +121,22 @@ test('history is append-only and saved atomically with each private Note revisio
  assert.match(editor,/Read-only historical revision/);
  assert.match(editor,/View saved revisions/);
  assert.doesNotMatch(migration,/\b(DROP TABLE|DELETE FROM|UPDATE subscribers|ALTER TABLE subscribers)\b/i);
+});
+
+test('private photographs remain authenticated and separate from public delivery',()=>{
+ const migration=fs.readFileSync('db/notes-studio-migrations/0005_private_photo_assets.sql','utf8');
+ const route=fs.readFileSync('app/api/admin/notes-studio/photo/route.ts','utf8');
+ const backend=fs.readFileSync('lib/notes-photo-store.ts','utf8');
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ assert.match(migration,/CREATE TABLE studio_note_images/);
+ assert.match(migration,/ON DELETE RESTRICT/);
+ assert.match(migration,/DEFERRABLE INITIALLY DEFERRED/);
+ assert.doesNotMatch(migration,/ALTER TABLE subscribers|UPDATE subscribers|DELETE FROM subscribers|DROP TABLE/i);
+ assert.match(route,/isAdminAuthenticatedReadOnly/);
+ assert.match(route,/isSameOriginPost/);
+ assert.match(route,/Cache-Control.*private, no-store/);
+ assert.match(backend,/WITH locked AS/);
+ assert.match(backend,/INSERT INTO studio_note_revisions/);
+ assert.match(editor,/PrivatePhotographFraming/);
+ assert.match(editor,/Save the private draft and its photograph description/);
 });

@@ -1,12 +1,32 @@
 'use client';
-import {useId,useState} from 'react';
+import {useEffect,useId,useState} from 'react';
+import {cropRectangle,frameFor,originalFraming,type Framing} from '@/lib/notes-framing';
 import {renderStudioEmail} from '@/lib/notes-email';
-type Draft={title:string;body:string;imageAlt:string};
+type Draft={title:string;body:string;imageAlt:string;framing:Framing|null};
 export function StudioEmailPreview({draft,image}:{draft:Draft;image?:string}){
  const [personalized,setPersonalized]=useState(false);
  const [mobile,setMobile]=useState(false);
  const id=useId();
- const email=renderStudioEmail({title:draft.title,rawText:draft.body,imageAlt:draft.imageAlt},image,{preferredName:personalized?'Alex':undefined});
+ const [framedImage,setFramedImage]=useState<string|undefined>(undefined);
+ const cropRule=frameFor(draft.framing??originalFraming,'email');
+ const cropKey=JSON.stringify(cropRule);
+ useEffect(()=>{
+  setFramedImage(undefined);
+  if(!image)return;
+  let disposed=false;const picture=new Image();
+  picture.onload=()=>{
+   if(disposed)return;
+   const crop=cropRectangle(picture.naturalWidth,picture.naturalHeight,cropRule);
+   const canvas=document.createElement('canvas');const ratio=Math.min(1,1200/crop.width);
+   canvas.width=Math.max(1,Math.round(crop.width*ratio));canvas.height=Math.max(1,Math.round(crop.height*ratio));
+   const context=canvas.getContext('2d');if(!context)return;
+   context.drawImage(picture,crop.left,crop.top,crop.width,crop.height,0,0,canvas.width,canvas.height);
+   if(!disposed)setFramedImage(canvas.toDataURL('image/jpeg',0.85));
+  };
+  picture.src=image;
+  return()=>{disposed=true;picture.src='';};
+ },[image,cropKey]);
+ const email=renderStudioEmail({title:draft.title,rawText:draft.body,imageAlt:draft.imageAlt},framedImage,{preferredName:personalized?'Alex':undefined});
  return <div className="studio-original-email-preview">
   <p className="text-xs leading-6 text-[#606364]">Subject: {email.subject||'No title entered'}. This serialized Note is separate from the introductory welcome letter.</p>
   <div className="mt-4 flex flex-wrap gap-5 md:gap-10">

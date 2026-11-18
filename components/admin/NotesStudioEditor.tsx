@@ -4,13 +4,15 @@ import {useEffect, useMemo, useState} from 'react';
 import {StudioReadingPreview} from './notes/StudioReadingPreview';
 import {StudioEmailPreview} from './notes/StudioEmailPreview';
 import {savedTime} from '@/lib/notes-studio-save-time';
+import {PrivatePhotographFraming} from './notes/PrivatePhotographFraming';
+import type {Framing} from '@/lib/notes-framing';
 
-type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string};
-type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string};
-type HistoricalNote={note_id:string;revision:number;title:string;body:string;narrator:'Behzad'|'Steven';saved_at:string;slug:string;image_alt:string;excerpt:string;image_caption:string;seo_description:string};
+type Note={id:string;slug:string;title:string;body:string;image_alt:string;state:'draft'|'scheduled'|'published'|'cancelled';paused:boolean;revision:number;scheduled_at:string|null;published_at:string|null;narrator:'Behzad'|'Steven';excerpt:string;image_caption:string;seo_description:string;created_at?:string;updated_at?:string;photo_id:string|null;photo_framing:Framing|null};
+type Draft={slug:string;title:string;body:string;imageAlt:string;narrator:'Behzad'|'Steven';excerpt:string;imageCaption:string;seoDescription:string;framing:Framing|null};
+type HistoricalNote={note_id:string;revision:number;title:string;body:string;narrator:'Behzad'|'Steven';saved_at:string;slug:string;image_alt:string;excerpt:string;image_caption:string;seo_description:string;photo_id:string|null;photo_framing:Framing|null};
 type View='notes'|'calendar'|'delivery';
 type Preview='website'|'email';
-const blank:Draft={slug:'',title:'',body:'',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:''};
+const blank:Draft={slug:'',title:'',body:'',imageAlt:'',narrator:'Behzad',excerpt:'',imageCaption:'',seoDescription:'',framing:null};
 const primary='inline-flex min-h-11 items-center justify-center rounded-md bg-[#172d42] px-5 py-2.5 text-sm font-medium text-[#fffdf8] transition hover:bg-[#29445b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b08a4c] disabled:cursor-not-allowed disabled:opacity-40';
 const secondary='inline-flex min-h-11 items-center justify-center rounded-md border border-[#d4c4aa] bg-[#fffdf8] px-4 py-2.5 text-sm font-medium text-[#172d42] transition hover:bg-[#f3ebdf] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b08a4c] disabled:cursor-not-allowed disabled:opacity-40';
 const field='mt-2 w-full rounded-md border border-[#d9cdbb] bg-[#fffefa] px-4 py-3 text-[15px] text-[#172d42] outline-none transition focus:border-[#9a753b] focus:ring-2 focus:ring-[#b99a68]/20 disabled:bg-[#f3efe7]';
@@ -49,6 +51,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  const [test,setTest]=useState<{id:string;recipient:string;subject:string}|null>(null);
  const [busy,setBusy]=useState(false);
  const [message,setMessage]=useState('');
+ const [emailImage,setEmailImage]=useState<string|undefined>(undefined);
  const [history,setHistory]=useState<HistoricalNote[]|null>(null);
  const [historyOpen,setHistoryOpen]=useState(false);
  const [historySelected,setHistorySelected]=useState<number|null>(null);
@@ -86,7 +89,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  function choose(n:Note){
   setHistory(null);setHistoryOpen(false);setHistorySelected(null);
   if(!guardUnsaved())return;
-  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
+  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??'',framing:n.photo_framing??null};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);
   setState(n.state);setPaused(n.paused);setPreviewOpen(false);setPreviewHtml('');setEditorTab('edit');
   setScheduleDate(n.scheduled_at?new Date(n.scheduled_at).toLocaleString('sv-SE').replace(' ','T').slice(0,16):'');
@@ -101,7 +104,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
  function incorporate(n:Note){
   setHistory(null);setHistorySelected(null);
   setNotes(prev=>[n,...prev.filter(x=>x.id!==n.id)]);
-  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??''};
+  const values={title:n.title,slug:n.slug,body:n.body,imageAlt:n.image_alt,narrator:n.narrator??'Behzad',excerpt:n.excerpt??'',imageCaption:n.image_caption??'',seoDescription:n.seo_description??'',framing:n.photo_framing??null};
   setSelection(n.id);setDraft(values);setSaved(values);setRevision(n.revision);setState(n.state);setPaused(n.paused);
   setTest(null);
  }
@@ -117,6 +120,19 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
   setView(next);setMessage('');
  }
  const url=selection?'/notes/'+(selected?.slug??draft.slug):'';
+ const imageUrl=selection&&selected?.photo_id?'/api/admin/notes-studio/photo?noteId='+encodeURIComponent(selection)+'&assetId='+encodeURIComponent(selected.photo_id):undefined;
+ useEffect(()=>{
+  setEmailImage(undefined);
+  if(!imageUrl)return;
+  const abort=new AbortController();
+  void fetch(imageUrl,{credentials:'same-origin',cache:'no-store',signal:abort.signal}).then(async response=>{if(!response.ok)throw Error('Image unavailable');return response.blob();}).then(blob=>{
+   if(abort.signal.aborted)return;
+   const reader=new FileReader();
+   reader.onload=()=>{if(!abort.signal.aborted&&typeof reader.result==='string')setEmailImage(reader.result);};
+   reader.readAsDataURL(blob);
+  }).catch(()=>{});
+  return()=>abort.abort();
+ },[imageUrl]);
  const firstDay=new Date(month.getFullYear(),month.getMonth(),1).getDay();
  const daysInMonth=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
  const squares=Array.from({length:Math.ceil((firstDay+daysInMonth)/7)*7},(_,i)=>i-firstDay+1);
@@ -169,9 +185,25 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
        </div>
        <aside className="min-w-0 border-t border-[#ded1ba] pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
         <h4 className="font-serif text-2xl font-normal">Photograph</h4>
-        <p className="mt-2 text-xs leading-5 text-[#606364]">The original local editor supported photographs and framing. Upload is temporarily unavailable until its original storage pipeline is safely connected.</p>
-        <div className="mt-4 grid min-h-[185px] place-content-center border border-dashed border-[#cfc4b0] bg-[#faf6ee] p-5 text-center text-sm text-[#606364]">No photograph selected</div>
-        <label className="mt-5 block text-[13px] font-semibold">Choose photograph<input type="file" accept="image/jpeg,image/png" disabled className={field+' cursor-not-allowed opacity-50'}/></label>
+        <p className="mt-2 text-xs leading-5 text-[#606364]">A private saved original. JPEG or PNG, up to 3 MiB and 16 megapixels. Save text and its alt description first; each new photograph creates a preserved revision.</p>
+        <div className="mt-4 grid min-h-[185px] place-content-center overflow-hidden border border-dashed border-[#cfc4b0] bg-[#faf6ee] text-center text-sm text-[#606364]">{imageUrl?<img className="block max-h-[320px] w-full object-contain" src={imageUrl} alt={draft.imageAlt||'Saved photograph'}/>:<span>No photograph selected</span>}</div>
+        <label className="mt-5 block text-[13px] font-semibold">Choose photograph
+          <input type="file" accept="image/jpeg,image/png" className={field} disabled={!selection||!editable||busy||dirty||!draft.imageAlt.trim()} onChange={e=>{
+           const photo=e.currentTarget.files?.[0];e.currentTarget.value='';
+           if(!photo||!selection||revision===null)return;
+           void run(async()=>{
+            if(photo.size>3*1024*1024||!['image/jpeg','image/png'].includes(photo.type))throw Error('Choose a JPEG or PNG up to 3 MiB.');
+            const form=new FormData();form.set('photograph',photo);form.set('noteId',selection);form.set('revision',String(revision));form.set('alt',draft.imageAlt);
+            const response=await fetch('/api/admin/notes-studio/photo',{method:'POST',body:form,credentials:'same-origin',cache:'no-store'});
+            const result=await response.json();
+            if(!response.ok)throw Error(result.error||'Photograph upload failed.');
+            incorporate(result.note);setMessage('Private photograph saved with a new revision. No email sent.');
+           });
+          }}/>
+        </label>
+        {(!selection||dirty)&&<p className="mt-2 text-xs text-[#8b6030]">Save the private draft and its photograph description before selecting a photo.</p>}
+        {imageUrl&&<PrivatePhotographFraming image={imageUrl} value={draft.framing} onChange={framing=>edit('framing',framing)} disabled={!editable||busy}/>}
+
         <label className="mt-4 block text-[13px] font-semibold">Photograph alt text<textarea className={field} rows={3} maxLength={250} disabled={!editable||busy} value={draft.imageAlt} onChange={e=>edit('imageAlt',e.target.value)}/></label>
         <p className="mt-1 text-xs leading-5 text-[#606364]">Used for accessibility and fallback text.</p>
         <details className="mt-5 border-t border-[#ded1ba] pt-5"><summary className="min-h-11 cursor-pointer text-[13px] font-semibold">Advanced / SEO</summary>
@@ -191,11 +223,11 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
      </section>
      <section id="studio-panel-website" role="tabpanel" aria-labelledby="studio-tab-website" hidden={editorTab!=='website'} className="pt-6">
       <p className="mb-4 text-xs leading-5 text-[#606364]">Current editor text, including unsaved changes. Private preview only.</p>
-      <StudioReadingPreview draft={draft}/>
+      <StudioReadingPreview draft={draft} image={imageUrl}/>
      </section>
      <section id="studio-panel-email" role="tabpanel" aria-labelledby="studio-tab-email" hidden={editorTab!=='email'} className="pt-6">
       <p className="mb-4 text-xs leading-5 text-[#606364]">Current editor text, including unsaved changes. No email is sent from this preview.</p>
-      <StudioEmailPreview draft={draft}/>
+      <StudioEmailPreview draft={draft} image={emailImage}/>
      </section>
      {selection&&<section className="mt-7 border-t border-[#e5daca] pt-5">
        <div className="flex flex-wrap items-center justify-between gap-3">
@@ -212,6 +244,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled}:{initialNotes:N
          {history?.find(item=>item.revision===historySelected)?((item)=> <article className="max-h-[400px] overflow-y-auto">
           <p className="text-xs text-[#766c60]">Read-only historical revision · Narrator: {item.narrator}</p>
           <h5 className="mt-2 font-serif text-2xl">{item.title}</h5>
+          {item.photo_id&&<img className="mt-3 max-h-[220px] max-w-full object-contain" src={'/api/admin/notes-studio/photo?noteId='+encodeURIComponent(item.note_id)+'&assetId='+encodeURIComponent(item.photo_id)} alt={item.image_alt}/>}
           <div className="mt-4 whitespace-pre-wrap border-t border-[#ddd1be] pt-4 font-serif text-lg leading-[1.7]">{item.body}</div>
           <p className="mt-5 text-xs text-[#766c60]">This snapshot is immutable. To reuse text, copy it manually into the draft editor.</p>
          </article>)(history.find(item=>item.revision===historySelected)!):<p className="text-sm text-[#766c60]">Choose a saved revision to review its original text.</p>}
