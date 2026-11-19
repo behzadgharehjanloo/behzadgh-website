@@ -138,7 +138,7 @@ test('private photographs remain authenticated and separate from public delivery
  assert.match(backend,/WITH locked AS/);
  assert.match(backend,/INSERT INTO studio_note_revisions/);
  assert.match(editor,/PrivatePhotographFraming/);
- assert.match(editor,/Click Save private draft to store this image/);
+ assert.match(editor,/Choose photograph/);
 });
 
 test('original Local photo picker is enabled before first save without requiring alt text',()=>{
@@ -152,7 +152,7 @@ test('original Local photo picker is enabled before first save without requiring
  assert.match(editor,/const result=await action\(\{action:'save',id:selection,revision,draft\}\)/);
  assert.match(editor,/form.set\('photograph',prepared.file\)/);
  assert.match(editor,/incorporate\(upload.note\)/);
- assert.match(editor,/Selected photograph:/);
+ assert.match(editor,/pendingPhoto\.name/);
  assert.match(backend,/if\(typeof alt!=='string'\|\|alt.trim\(\).length>250\)/);
  assert.match(photo,/onPointerDown/);
  assert.match(photo,/onPointerMove/);
@@ -190,14 +190,14 @@ test('finalized Local photo selection validates and decodes images up to 10 MB w
 test('the approved Local photo editor is visible immediately with usable zoom buttons',()=>{
  const framing=fs.readFileSync('components/admin/notes/PrivatePhotographFraming.tsx','utf8');
  const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
- assert.match(framing,/<details open className=/);
+ assert.match(framing,/<details id="studio-image-editor" className=/);
  assert.match(framing,/aria-label="Photograph zoom controls"/);
  assert.match(framing,/aria-label="Zoom in"/);
  assert.match(framing,/aria-label="Zoom out"/);
  assert.match(framing,/Math.min\(3,Math.round\(\(frame.zoom\+0.1\)\*100\)\/100\)/);
  assert.match(framing,/Math.max\(1,Math.round\(\(frame.zoom-0.1\)\*100\)\/100\)/);
  assert.match(framing,/Math.round\(frame.zoom\*100\)/);
- assert.match(framing,/Reset zoom/);
+ assert.match(framing,/>Reset<\/button>/);
  assert.match(framing,/onPointerMove/);
  assert.match(framing,/onKeyDown/);
  assert.match(editor,/displayImage&&<PrivatePhotographFraming/);
@@ -233,4 +233,32 @@ test('original 10 MB cloud photos have private short lived tickets and immutable
  assert.match(ui,/action:'begin'/);
  assert.match(ui,/action:'finalize'/);
  assert.match(ui,/method:'PUT'/);
+});
+
+test('compact editorial workspace keeps exact source text, previews and safe upload intact',()=>{
+ const page=fs.readFileSync('app/admin/notes-studio/page.tsx','utf8');
+ const editor=fs.readFileSync('components/admin/NotesStudioEditor.tsx','utf8');
+ const photo=fs.readFileSync('components/admin/notes/PrivatePhotographFraming.tsx','utf8');
+ const header=fs.readFileSync('components/Header.tsx','utf8');
+ assert.equal((page+editor).split('>Notes Studio<').length-1,1);
+ assert.match(header,/Behzad Gharehjanloo/);
+ assert.match(header,/Steven Jones/);
+ assert.match(editor,/aria-label="Draft views"/);
+ assert.match(editor,/Website preview/);
+ assert.match(editor,/Email preview/);
+ assert.match(editor,/value=\{draft.body\}/);
+ assert.match(editor,/spellCheck=\{false\}/);
+ assert.match(editor,/autoCorrect="off"/);
+ assert.doesNotMatch(editor,/document\.execCommand|contentEditable|dangerouslySetInnerHTML/);
+ assert.match(editor,/pendingPhoto&&/);
+ assert.match(editor,/photoProblem&&/);
+ assert.match(editor,/action:'finalize'/);
+ assert.match(editor,/Saved draft|Unsaved changes/);
+ assert.match(editor,/Photograph description/);
+ assert.match(editor,/Page URL slug/);
+ assert.match(editor,/Archive excerpt/);
+ assert.match(editor,/Advanced \/ SEO/);
+ assert.match(photo,/studio-image-editor/);
+ assert.match(photo,/Edit image/);
+ assert.doesNotMatch(photo,/<details open/);
 });

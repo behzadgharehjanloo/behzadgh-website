@@ -5,6 +5,7 @@ import {StudioReadingPreview} from './notes/StudioReadingPreview';
 import {StudioEmailPreview} from './notes/StudioEmailPreview';
 import {savedTime} from '@/lib/notes-studio-save-time';
 import {PrivatePhotographFraming} from './notes/PrivatePhotographFraming';
+import {StudioIcon} from './notes/StudioIcon';
 import type {Framing} from '@/lib/notes-framing';
 import {readLocalPhotographPreview,localEmailPhotographPreview,prepareLocalPhotoUpload} from '@/lib/notes-photo-local-preview';
 
@@ -178,24 +179,27 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled,cloudPhotosEnabl
  const daysInMonth=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
  const squares=Array.from({length:Math.ceil((firstDay+daysInMonth)/7)*7},(_,i)=>i-firstDay+1);
  const scheduled=notes.filter(n=>n.state==='scheduled'&&n.scheduled_at);
- return <div className="mt-7 overflow-hidden rounded-2xl border border-[#ded3c3] bg-[#f8f4ed] text-[#172d42] shadow-[0_16px_46px_rgba(21,37,50,0.05)]">
-  <div className="flex flex-col justify-between gap-4 border-b border-[#ded3c3] bg-[#fffdf8] px-5 py-5 md:flex-row md:items-center md:px-7">
-   <div><p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#987b4e]">PRIVATE EDITORIAL WORKSPACE</p><h2 className="mt-1 font-serif text-[27px] font-normal leading-tight md:text-[33px]">Notes Studio</h2><p className="mt-1 text-xs text-[#766c60]">Write, review and prepare your letters without altering the original voice.</p></div>
-   <div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-[#decfae] bg-[#faf3e5] px-3 py-1.5 text-[11px] font-medium text-[#79603a]">Private workspace</span><span className="rounded-full border border-[#d7ded3] bg-[#edf2ea] px-3 py-1.5 text-[11px] font-medium text-[#50604c]">{deliveryEnabled?'Delivery enabled':'Public delivery off'}</span><button type="button" className={primary} onClick={fresh}>+ New Note</button></div>
+ return <div className="mt-2 overflow-hidden rounded-2xl border border-[#ded3c3] bg-[#f8f4ed] text-[#172d42] shadow-[0_16px_46px_rgba(21,37,50,0.05)]">
+  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded3c3] bg-[#fffdf8] px-4 py-3 md:px-6">
+   <p className="text-xs font-medium text-[#776b5c]">Private editorial workspace</p>
+   <div className="flex flex-wrap items-center gap-2"><span className="inline-flex items-center gap-1.5 rounded-full border border-[#ded3c3] bg-[#faf3e7] px-3 py-1.5 text-[11px] font-medium text-[#755e42]"><StudioIcon name="lock"/>{deliveryEnabled?'Public delivery enabled':'Public delivery off'}</span><button type="button" className={primary+' gap-2'} onClick={fresh}><StudioIcon name="plus"/>New Note</button></div>
   </div>
-  <div className="grid min-h-[760px] lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[222px_minmax(0,1fr)]">
+  <div className="grid min-h-[760px] lg:grid-cols-[175px_minmax(0,1fr)] 2xl:grid-cols-[190px_minmax(0,1fr)]">
    <aside className="border-b border-[#d8ccb8] bg-[#203347] px-4 py-6 text-[#f7efe1] lg:border-b-0 lg:border-r lg:border-r-[#d8ccb8]">
-    <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c3ad86]">WORKSPACE</p>
+    <div className="mb-5 border-b border-white/15 px-2 pb-5">
+     <p className="font-serif text-[23px] leading-tight text-[#fff8ef]">Notes Studio</p>
+     <p className="mt-1 text-[10px] tracking-wide text-[#c8bca9]">Write · Preview · Publish</p>
+    </div>
     <nav aria-label="Notes Studio sections" className="mt-4 flex flex-wrap gap-1 lg:flex-col">
-     {([['notes','All Notes'],['calendar','Publication Calendar'],['delivery','Delivery & Status']] as const).map(([key,label])=><button key={key} type="button" onClick={()=>openView(key)} aria-current={view===key?'page':undefined} className={'w-full rounded-lg px-3 py-3 text-left text-[13px] transition sm:w-auto lg:w-full '+(view===key?'bg-[#e9dcc5] font-semibold text-[#172d42]':'text-[#e6ddd0] hover:bg-white/10')}>{label}</button>)}
+     {([['notes','All Notes','notes'],['calendar','Publication Calendar','calendar'],['delivery','Delivery & Status','mail']] as const).map(([key,label,icon])=><button key={key} type="button" onClick={()=>openView(key)} aria-current={view===key?'page':undefined} className={'flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] transition sm:w-auto lg:w-full '+(view===key?'bg-[#e9dcc5] font-semibold text-[#172d42]':'text-[#e6ddd0] hover:bg-white/10')}><StudioIcon name={icon}/>{label}</button>)}
     </nav>
     <div className="mt-8 hidden border-t border-white/15 pt-6 lg:block"><p className="px-3 text-[10px] uppercase tracking-[0.17em] text-[#c3ad86]">At a glance</p><dl className="mt-3 space-y-3 px-3 text-xs"><div className="flex justify-between"><dt>Drafts</dt><dd>{counts.drafts}</dd></div><div className="flex justify-between"><dt>Scheduled</dt><dd>{counts.scheduled}</dd></div><div className="flex justify-between"><dt>Published</dt><dd>{counts.published}</dd></div></dl></div>
     <a href="/admin" className="mt-9 hidden border-t border-white/15 px-3 pt-5 text-xs text-[#e9dcc5] underline underline-offset-4 lg:block">Back to Dashboard</a>
    </aside>
-   <div className="min-w-0 p-4 md:p-6 xl:p-8">
-   {view==='notes'&&<div className="grid gap-5 xl:grid-cols-[minmax(210px,0.85fr)_minmax(0,2.15fr)]">
+   <div className="min-w-0 p-3 md:p-5 xl:p-6">
+   {view==='notes'&&<div className="grid gap-4 xl:grid-cols-[minmax(175px,0.55fr)_minmax(0,2.45fr)] 2xl:grid-cols-[minmax(210px,0.58fr)_minmax(0,2.42fr)]">
     <section className={panel+' self-start p-4'}>
-     <div className="flex items-center justify-between gap-3"><h3 className="font-serif text-xl">My Notes</h3><span className="text-xs text-[#81776b]">{notes.length} total</span></div>
+     <div className="flex items-center justify-between gap-3"><h3 className="flex items-center gap-2 font-serif text-xl"><StudioIcon name="notes" className="text-[#967743]"/>My Notes</h3><span className="text-xs text-[#81776b]">{notes.length} total</span></div>
      <label htmlFor="studio-search" className="sr-only">Search Notes</label>
      <input id="studio-search" className={field+' text-sm'} placeholder="Search Notes..." value={search} onChange={e=>setSearch(e.target.value)}/>
      <div className="mt-4 max-h-[630px] space-y-2 overflow-y-auto">
@@ -207,50 +211,54 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled,cloudPhotosEnabl
       </button>)}
      </div>
     </section>
-    <section className={panel+' min-w-0 p-5 md:p-7'}>
+    <section className={panel+' min-w-0 p-4 md:p-6'}>
      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#e5daca] pb-5">
-      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 font-serif text-[26px] leading-tight">{selection?(selected?.title??draft.title):'An unwritten Note'}</h3></div>
+      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 flex items-center gap-2 font-serif text-[26px] leading-tight"><StudioIcon name="note" className="h-6 w-6 text-[#a58554]"/>{selection?(selected?.title??draft.title):'An unwritten Note'}</h3></div>
       <span className="rounded-md bg-[#f3ede3] px-3 py-1.5 text-xs text-[#756b5e]">{selection?state.toUpperCase():'UNSAVED'}{dirty?' · Unsaved changes':''}</span>
      </div>
 
-     <div role="tablist" aria-label="Draft views" className="mt-6 flex flex-wrap gap-2 border-b border-[#ded1ba]">
-      {([['edit','Editor'],['website','Website preview'],['email','Email preview']] as const).map(([key,label],index,tabs)=><button key={key} type="button" role="tab" id={'studio-tab-'+key} aria-controls={'studio-panel-'+key} aria-selected={editorTab===key} tabIndex={editorTab===key?0:-1} onClick={()=>setEditorTab(key)} onKeyDown={event=>{const next=event.key==='ArrowRight'?(index+1)%3:event.key==='ArrowLeft'?(index+2)%3:event.key==='Home'?0:event.key==='End'?2:-1;if(next>=0){event.preventDefault();setEditorTab(tabs[next][0]);document.getElementById('studio-tab-'+tabs[next][0])?.focus();}}} className={'min-h-11 rounded-t border border-b-0 px-4 py-2.5 text-[13px] font-semibold transition '+(editorTab===key?'border-[#17232c] bg-[#17232c] text-[#faf6ee]':'border-[#d5c7ae] bg-[#fffdf8] text-[#606364] hover:bg-[#f0e8da]')}>{label}</button>)}
+     <div role="tablist" aria-label="Draft views" className="mt-5 flex flex-wrap gap-1.5 border-b border-[#ded1ba]">
+      {([['edit','Editor'],['website','Website preview'],['email','Email preview']] as const).map(([key,label],index,tabs)=><button key={key} type="button" role="tab" id={'studio-tab-'+key} aria-controls={'studio-panel-'+key} aria-selected={editorTab===key} tabIndex={editorTab===key?0:-1} onClick={()=>setEditorTab(key)} onKeyDown={event=>{const next=event.key==='ArrowRight'?(index+1)%3:event.key==='ArrowLeft'?(index+2)%3:event.key==='Home'?0:event.key==='End'?2:-1;if(next>=0){event.preventDefault();setEditorTab(tabs[next][0]);document.getElementById('studio-tab-'+tabs[next][0])?.focus();}}} className={'min-h-11 rounded-t border border-b-0 px-4 py-2.5 text-[13px] font-semibold transition '+(editorTab===key?'border-[#17232c] bg-[#17232c] text-[#faf6ee]':'border-[#d5c7ae] bg-[#fffdf8] text-[#606364] hover:bg-[#f0e8da]')}><StudioIcon name={key==='edit'?'pen':key==='website'?'monitor':'mail'} className="mr-2"/>{label}</button>)}
      </div>
      <section id="studio-panel-edit" role="tabpanel" aria-labelledby="studio-tab-edit" hidden={editorTab!=='edit'} className="pt-6">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(245px,1fr)]">
-       <div className="min-w-0 space-y-5">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(245px,285px)] 2xl:grid-cols-[minmax(0,1fr)_minmax(285px,320px)]">
+       <div className="min-w-0 space-y-4">
         <label className="block text-[13px] font-semibold">Title<input className={field} maxLength={160} value={draft.title} disabled={!editable||busy} onChange={e=>setDraft(v=>({...v,title:e.target.value,slug:(!v.slug||v.slug===slugFromTitle(v.title))?slugFromTitle(e.target.value):v.slug}))}/></label>
         <label className="block text-[13px] font-semibold">Narrator<select className={field} value={draft.narrator} disabled={!editable||busy} onChange={e=>edit('narrator',e.target.value as 'Behzad'|'Steven')}><option value="Behzad">Behzad</option><option value="Steven">Steven</option></select></label>
-        <label className="block text-[13px] font-semibold">Exact Note text<p className="mt-2 text-xs font-normal leading-5 text-[#606364]">Your punctuation, spacing and line breaks are kept. No automatic editing or rewriting.</p><textarea className={field+' min-h-[365px] resize-y font-serif text-[19px] font-normal leading-[1.75]'} rows={15} maxLength={15000} spellCheck={false} autoCorrect="off" autoCapitalize="off" value={draft.body} disabled={!editable||busy} onChange={e=>edit('body',e.target.value)}/></label>
+        <label className="block text-[13px] font-semibold">Exact Note text<textarea className={field+' min-h-[450px] resize-y font-serif text-[19px] font-normal leading-[1.75]'} rows={15} maxLength={15000} spellCheck={false} autoCorrect="off" autoCapitalize="off" value={draft.body} disabled={!editable||busy} onChange={e=>edit('body',e.target.value)}/></label>
         <p className="text-xs text-[#86796a]">{draft.body.length.toLocaleString()} characters · {countWords(draft.body)} words · {dirty?'Unsaved changes':'Saved draft'}</p>
        </div>
-       <aside className="min-w-0 border-t border-[#ded1ba] pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
-        <h4 className="font-serif text-2xl font-normal">Photograph</h4>
-        <p className="mt-2 text-xs leading-5 text-[#606364]">Choose a JPEG or PNG up to 10 MB (16 megapixels). When cloud storage is enabled the full original is saved privately, and framing is kept with each Note revision.</p>
-        <div className="mt-4 grid min-h-[185px] place-content-center overflow-hidden border border-dashed border-[#cfc4b0] bg-[#faf6ee] text-center text-sm text-[#606364]">{displayImage?<img className="block max-h-[320px] w-full object-contain" src={displayImage} alt={draft.imageAlt||'Selected photograph'}/>:<span>No photograph selected</span>}</div>
-        <label className="mt-5 block text-[13px] font-semibold">Choose photograph
-          <input type="file" accept="image/jpeg,image/png" className={field} disabled={!editable||busy||photoReading} onChange={e=>{
+       <aside className="min-w-0 space-y-3">
+        <section className="rounded-xl border border-[#e0d3c0] bg-[#fffdfa] p-3 shadow-[0_3px_16px_rgba(21,37,50,0.025)]">
+         <h4 className="mb-3 flex items-center gap-2 font-serif text-xl text-[#172d42]"><StudioIcon name="image" className="text-[#967743]"/>Photograph</h4>
+         <div className="flex min-h-[165px] items-center justify-center overflow-hidden rounded-lg bg-[#f2ede5]">
+          {displayImage?<img className="block max-h-[270px] w-full object-contain" src={displayImage} alt={draft.imageAlt||'Selected photograph'}/>:<div className="flex flex-col items-center gap-2 py-12 text-xs text-[#8b8071]"><StudioIcon name="camera" className="h-8 w-8"/>No photograph</div>}
+         </div>
+         <label className="mt-3 block text-[12px] font-semibold text-[#172d42]"><span className="flex items-center gap-2"><StudioIcon name="upload"/>Choose photograph</span>
+          <input type="file" accept="image/jpeg,image/png" className={field+' min-w-0 cursor-pointer px-2 py-2 text-xs file:mr-2 file:rounded file:border file:border-[#d1c1aa] file:bg-[#fbf6ef] file:px-2 file:py-1 file:text-xs'} disabled={!editable||busy||photoReading} onChange={e=>{
            const file=e.currentTarget.files?.[0];e.currentTarget.value='';
            if(file)void selectPhotograph(file);
           }}/>
-        </label>
-        {photoReading&&<p className="mt-2 text-sm font-medium text-[#305267]" role="status">Checking photograph and preparing preview…</p>}
-        {photoProblem&&<p className="mt-2 rounded border border-[#bfa982] bg-[#fff8e8] px-3 py-2 text-sm leading-6 text-[#775125]" role="status">{photoProblem}</p>}
-        {pendingPhoto&&<div className="mt-2 rounded border border-[#d9cdbb] bg-[#faf6ee] px-3 py-2 text-xs">
-          <p className="font-semibold">Selected photograph: {pendingPhoto.name} · not saved yet</p>
-          <p className="mt-1">Click Save private draft to store this image and a new immutable revision.</p>
-          <button className="mt-2 text-[#805c35] underline" type="button" disabled={busy} onClick={()=>{photoValidationController.current?.abort();setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');}}>Cancel selected photograph</button>
-        </div>}
-        {!selection&&<p className="mt-2 text-xs text-[#8b6030]">You can choose a photograph now; saving creates the Note first.</p>}
+         </label>
+         {photoReading&&<p className="mt-2 text-xs text-[#305267]" role="status">Checking photograph…</p>}
+         {photoProblem&&<p className="mt-2 rounded-md border border-[#c7ae8b] bg-[#fff8e8] px-3 py-2 text-xs leading-5 text-[#775125]" role="status">{photoProblem}</p>}
+         {pendingPhoto&&<div className="mt-2 flex flex-wrap items-center justify-between gap-1 text-[11px] text-[#695c4c]">
+          <span className="min-w-0 break-all"><StudioIcon name="check" className="mr-1 text-[#4b755b]"/>{pendingPhoto.name} · Not saved</span>
+          <button className="underline underline-offset-2" type="button" disabled={busy} onClick={()=>{photoValidationController.current?.abort();setPendingPhoto(null);setPendingPhotoUrl(undefined);setPendingEmailData(undefined);setPhotoProblem('');}}>Remove</button>
+         </div>}
+        </section>
         {displayImage&&<PrivatePhotographFraming image={displayImage} value={draft.framing} onChange={framing=>edit('framing',framing)} disabled={!editable||busy}/>}
-        <label className="mt-4 block text-[13px] font-semibold">Photograph alt text<textarea className={field} rows={3} maxLength={250} disabled={!editable||busy} value={draft.imageAlt} onChange={e=>edit('imageAlt',e.target.value)}/></label>
-        <p className="mt-1 text-xs leading-5 text-[#606364]">Optional, as in the original Local Studio. Used for accessibility and fallback text.</p>
-        <details className="mt-5 border-t border-[#ded1ba] pt-5"><summary className="min-h-11 cursor-pointer text-[13px] font-semibold">Advanced / SEO</summary>
-         <div className="mt-3 space-y-4">
-          <label className="block text-xs font-semibold">Page URL slug<input className={field} value={draft.slug} disabled={!editable||busy} onChange={e=>edit('slug',e.target.value)} placeholder="my-note-title"/></label>
-          <label className="block text-xs font-semibold">Caption (optional)<input className={field} value={draft.imageCaption} maxLength={1000} disabled={!editable||busy} onChange={e=>edit('imageCaption',e.target.value)}/></label>
-          <label className="block text-xs font-semibold">Archive excerpt<textarea className={field} rows={3} maxLength={1000} value={draft.excerpt} disabled={!editable||busy} onChange={e=>edit('excerpt',e.target.value)}/></label>
-          <label className="block text-xs font-semibold">Search description<textarea className={field} rows={3} maxLength={500} value={draft.seoDescription} disabled={!editable||busy} onChange={e=>edit('seoDescription',e.target.value)}/></label>
+        <details className="group rounded-xl border border-[#e0d3c0] bg-[#fffdf9] p-3">
+         <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 font-serif text-lg [&::-webkit-details-marker]:hidden"><StudioIcon name="type"/><span>Alt text</span>{draft.imageAlt&&<StudioIcon name="check" className="ml-1 text-[#4b755b]"/>}<StudioIcon name="chevron" className="ml-auto transition-transform group-open:rotate-180"/></summary>
+         <label className="mt-2 block text-xs font-semibold">Photograph description<textarea className={field+' text-sm'} rows={3} maxLength={250} disabled={!editable||busy} value={draft.imageAlt} onChange={e=>edit('imageAlt',e.target.value)}/></label>
+        </details>
+        <details className="group rounded-xl border border-[#e0d3c0] bg-[#fffdf9] p-3">
+         <summary className="flex min-h-9 cursor-pointer list-none items-center gap-2 font-serif text-lg [&::-webkit-details-marker]:hidden"><StudioIcon name="settings"/><span>Advanced / SEO</span><StudioIcon name="chevron" className="ml-auto transition-transform group-open:rotate-180"/></summary>
+         <div className="mt-3 space-y-3">
+          <label className="block text-xs font-semibold">Page URL slug<input className={field+' text-sm'} value={draft.slug} disabled={!editable||busy} onChange={e=>edit('slug',e.target.value)} placeholder="my-note-title"/></label>
+          <label className="block text-xs font-semibold">Caption (optional)<input className={field+' text-sm'} value={draft.imageCaption} maxLength={1000} disabled={!editable||busy} onChange={e=>edit('imageCaption',e.target.value)}/></label>
+          <label className="block text-xs font-semibold">Archive excerpt<textarea className={field+' text-sm'} rows={3} maxLength={1000} value={draft.excerpt} disabled={!editable||busy} onChange={e=>edit('excerpt',e.target.value)}/></label>
+          <label className="block text-xs font-semibold">Search description<textarea className={field+' text-sm'} rows={3} maxLength={500} value={draft.seoDescription} disabled={!editable||busy} onChange={e=>edit('seoDescription',e.target.value)}/></label>
          </div>
         </details>
        </aside>
@@ -289,7 +297,7 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled,cloudPhotosEnabl
         }else{
          incorporate(result.note);setMessage('Private revision saved. No publication or email sent.');
         }
-       })}>{busy?'Saving…':'Save private draft'}</button>
+       })}><StudioIcon name="save" className="mr-2"/>{busy?'Saving…':'Save private draft'}</button>
        {selection&&savedTime(selected?.updated_at)&&<p className="min-w-0 flex-1 text-xs leading-5 text-[#675a48]" aria-live="polite"><time className="font-semibold text-[#203347]" dateTime={selected?.updated_at}>{savedTime(selected?.updated_at)}</time><span className="block text-[#776f63]">Private revision · Nothing published or sent{dirty?' · Unsaved changes remain':''}</span></p>}
       </div>
      </section>
