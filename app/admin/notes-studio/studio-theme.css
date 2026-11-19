@@ -11,22 +11,18 @@
   min-height:154px;padding:1.6rem clamp(1.1rem,3.5vw,3.5rem);
   border:1px solid #dfd0bc;border-radius:18px 18px 0 0;
   background:
-    linear-gradient(96deg,rgba(250,246,237,.99) 0%,rgba(250,246,237,.95) 51%,rgba(237,226,206,.6) 100%),
-    repeating-linear-gradient(0deg,transparent 0px,transparent 5px,rgba(92,77,51,.035) 6px);
+    linear-gradient(90deg,#faf6ee 0%,rgba(250,246,238,.98) 41%,rgba(250,246,238,.72) 59%,rgba(250,246,238,.15) 100%),
+    linear-gradient(0deg,rgba(125,100,67,.20),rgba(125,100,67,.20)),
+    url("https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Panorama_with_Duomo_-_Florence_-_Italy.jpg/1280px-Panorama_with_Duomo_-_Florence_-_Italy.jpg") right 43% / auto 340px no-repeat,
+    #eee5d7;
 }
 .notes-studio-hero::before{
-  content:"";position:absolute;z-index:-1;right:3%;top:-75px;width:410px;height:360px;
-  transform:rotate(-15deg);opacity:.34;pointer-events:none;
-  background:
-    linear-gradient(90deg,transparent 45%,#b5a88f 45%,#b5a88f 47%,transparent 47%),
-    linear-gradient(0deg,transparent 47%,#b5a88f 47%,#b5a88f 49%,transparent 49%),
-    linear-gradient(90deg,transparent 20%,#c7b8a2 20%,#c7b8a2 22%,transparent 22%,transparent 78%,#c7b8a2 78%,#c7b8a2 80%,transparent 80%);
-  border:14px solid #c5b59c;box-shadow:52px 36px 42px #a8957130;
+ content:"";position:absolute;pointer-events:none;inset:0;z-index:-1;
+ background:linear-gradient(90deg,transparent 56%,rgba(255,248,236,.22) 100%);
 }
 .notes-studio-hero::after{
-  content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;
-  background:linear-gradient(112deg,transparent 65%,rgba(255,255,255,.42) 67%,transparent 74%),
-             radial-gradient(ellipse at 82% 15%,#f1e2ca90,transparent 36%);
+ content:"";position:absolute;pointer-events:none;bottom:-1px;right:0;width:45%;height:5px;opacity:.55;
+ background:linear-gradient(90deg,transparent,#9b6b56);
 }
 .notes-studio-hero h1{font-family:Georgia,serif;font-size:clamp(2.05rem,3.7vw,3.4rem);line-height:1.15;letter-spacing:-.035em;color:#343b29;font-weight:400;white-space:nowrap}
 .notes-studio-kicker{display:flex;align-items:center;gap:.5rem;color:#9c5a4b;font-size:.73rem;letter-spacing:.13em;font-weight:700;text-transform:uppercase}
@@ -72,3 +68,11 @@
 .notes-studio-workspace .studio-save-button:hover{background:#505b3a!important}
 @media(max-width:900px){.notes-studio-hero{min-height:120px}.notes-studio-sidebar:after{display:none}}
 @media(prefers-reduced-motion:reduce){.notes-studio-workspace *{transition:none!important}}
+
+/* The photograph is credited in the private header. Source: Adam63 / Wikimedia Commons / CC BY-SA 3.0. */
+.notes-studio-photo-credit{position:absolute;bottom:10px;right:17px;z-index:1;color:#534a40;font-size:10px;text-shadow:0 1px 7px #fff;background:#fff7ebc7;padding:2px 6px;border-radius:5px}
+.notes-studio-photo-credit a{text-decoration:underline;text-underline-offset:2px}
+@media(max-width:750px){
+ .notes-studio-hero{background:linear-gradient(90deg,rgba(250,246,238,.97),rgba(250,246,238,.78)),url("https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f1/Panorama_with_Duomo_-_Florence_-_Italy.jpg/1280px-Panorama_with_Duomo_-_Florence_-_Italy.jpg") center / cover no-repeat,#eee5d7}
+ .notes-studio-photo-credit{right:9px;bottom:4px;font-size:9px}
+}
