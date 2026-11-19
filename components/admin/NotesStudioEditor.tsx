@@ -181,20 +181,20 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled,cloudPhotosEnabl
  const scheduled=notes.filter(n=>n.state==='scheduled'&&n.scheduled_at);
  return <div className="mt-2 overflow-hidden rounded-2xl border border-[#ded3c3] bg-[#f8f4ed] text-[#172d42] shadow-[0_16px_46px_rgba(21,37,50,0.05)]">
   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded3c3] bg-[#fffdf8] px-4 py-3 md:px-6">
-   <p className="text-xs font-medium text-[#776b5c]">Private editorial workspace</p>
+   <div className="flex flex-wrap items-center gap-x-3 gap-y-1"><p className="text-xs font-medium text-[#776b5c]">Private editorial workspace</p><span className="hidden text-[#c3b7a6] sm:inline" aria-hidden="true">·</span><p className="text-xs font-medium text-[#514c45]">Behzad Gharehjanloo <span className="px-1 text-[#b29b79]" aria-hidden="true">·</span> Steven Jones</p></div>
    <div className="flex flex-wrap items-center gap-2"><span className="inline-flex items-center gap-1.5 rounded-full border border-[#ded3c3] bg-[#faf3e7] px-3 py-1.5 text-[11px] font-medium text-[#755e42]"><StudioIcon name="lock"/>{deliveryEnabled?'Public delivery enabled':'Public delivery off'}</span><button type="button" className={primary+' gap-2'} onClick={fresh}><StudioIcon name="plus"/>New Note</button></div>
   </div>
   <div className="grid min-h-[760px] lg:grid-cols-[175px_minmax(0,1fr)] 2xl:grid-cols-[190px_minmax(0,1fr)]">
-   <aside className="border-b border-[#d8ccb8] bg-[#203347] px-4 py-6 text-[#f7efe1] lg:border-b-0 lg:border-r lg:border-r-[#d8ccb8]">
-    <div className="mb-5 border-b border-white/15 px-2 pb-5">
-     <p className="font-serif text-[23px] leading-tight text-[#fff8ef]">Notes Studio</p>
-     <p className="mt-1 text-[10px] tracking-wide text-[#c8bca9]">Write · Preview · Publish</p>
+   <aside className="border-b border-[#d8ccb8] bg-[#eee7db] px-4 py-6 text-[#37404a] lg:border-b-0 lg:border-r lg:border-r-[#d8ccb8]">
+    <div className="mb-5 border-b border-[#d7caba] px-2 pb-5">
+     <p className="whitespace-nowrap font-serif text-[20px] leading-tight text-[#283541]">Notes Studio</p>
+     <p className="mt-1 text-[10px] tracking-wide text-[#786d60]">Write · Preview · Publish</p>
     </div>
     <nav aria-label="Notes Studio sections" className="mt-4 flex flex-wrap gap-1 lg:flex-col">
-     {([['notes','All Notes','notes'],['calendar','Publication Calendar','calendar'],['delivery','Delivery & Status','mail']] as const).map(([key,label,icon])=><button key={key} type="button" onClick={()=>openView(key)} aria-current={view===key?'page':undefined} className={'flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] transition sm:w-auto lg:w-full '+(view===key?'bg-[#e9dcc5] font-semibold text-[#172d42]':'text-[#e6ddd0] hover:bg-white/10')}><StudioIcon name={icon}/>{label}</button>)}
+     {([['notes','All Notes','notes'],['calendar','Publication Calendar','calendar'],['delivery','Delivery & Status','mail']] as const).map(([key,label,icon])=><button key={key} type="button" onClick={()=>openView(key)} aria-current={view===key?'page':undefined} className={'flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] transition sm:w-auto lg:w-full '+(view===key?'bg-[#fffaf2] font-semibold text-[#24313d] shadow-sm':'text-[#4d534f] hover:bg-[#e3d8c8]')}><StudioIcon name={icon}/>{label}</button>)}
     </nav>
-    <div className="mt-8 hidden border-t border-white/15 pt-6 lg:block"><p className="px-3 text-[10px] uppercase tracking-[0.17em] text-[#c3ad86]">At a glance</p><dl className="mt-3 space-y-3 px-3 text-xs"><div className="flex justify-between"><dt>Drafts</dt><dd>{counts.drafts}</dd></div><div className="flex justify-between"><dt>Scheduled</dt><dd>{counts.scheduled}</dd></div><div className="flex justify-between"><dt>Published</dt><dd>{counts.published}</dd></div></dl></div>
-    <a href="/admin" className="mt-9 hidden border-t border-white/15 px-3 pt-5 text-xs text-[#e9dcc5] underline underline-offset-4 lg:block">Back to Dashboard</a>
+    <div className="mt-8 hidden border-t border-[#d7caba] pt-6 lg:block"><p className="px-3 text-[10px] uppercase tracking-[0.17em] text-[#7e705f]">At a glance</p><dl className="mt-3 space-y-3 px-3 text-xs"><div className="flex justify-between"><dt>Drafts</dt><dd>{counts.drafts}</dd></div><div className="flex justify-between"><dt>Scheduled</dt><dd>{counts.scheduled}</dd></div><div className="flex justify-between"><dt>Published</dt><dd>{counts.published}</dd></div></dl></div>
+    <a href="/admin" className="mt-9 hidden border-t border-[#d7caba] px-3 pt-5 text-xs text-[#665b4d] underline underline-offset-4 lg:block">Back to Dashboard</a>
    </aside>
    <div className="min-w-0 p-3 md:p-5 xl:p-6">
    {view==='notes'&&<div className="grid gap-4 xl:grid-cols-[minmax(175px,0.55fr)_minmax(0,2.45fr)] 2xl:grid-cols-[minmax(210px,0.58fr)_minmax(0,2.42fr)]">
