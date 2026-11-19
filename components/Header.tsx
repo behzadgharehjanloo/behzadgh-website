@@ -26,7 +26,7 @@ export function Header() {
     <header className="sticky top-0 z-30 border-b border-line/60 bg-[#faf6ee]/95 backdrop-blur">
       <div className="mx-auto flex min-h-[74px] w-full max-w-[1750px] flex-col gap-3 px-5 py-3 sm:px-8 md:flex-row md:items-center md:justify-between md:gap-6 md:px-10">
         <Link href="/" className="font-serif text-[17px] leading-tight text-[#0b1620] sm:text-[20px] lg:text-[23px]">
-          Behzad Gharehjanloo <span className="px-1 text-[#ad956f]" aria-hidden="true">·</span> Steven Jones
+          Behzad Gharehjanloo
         </Link>
 
         <nav
