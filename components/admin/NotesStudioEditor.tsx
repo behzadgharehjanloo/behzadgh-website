@@ -5,6 +5,7 @@ import {StudioReadingPreview} from './notes/StudioReadingPreview';
 import {StudioEmailPreview} from './notes/StudioEmailPreview';
 import {savedTime} from '@/lib/notes-studio-save-time';
 import {PrivatePhotographFraming} from './notes/PrivatePhotographFraming';
+import {StudioIcon} from './notes/StudioIcon';
 import type {Framing} from '@/lib/notes-framing';
 import {readLocalPhotographPreview,localEmailPhotographPreview,prepareLocalPhotoUpload} from '@/lib/notes-photo-local-preview';
 
@@ -178,24 +179,27 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled,cloudPhotosEnabl
  const daysInMonth=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
  const squares=Array.from({length:Math.ceil((firstDay+daysInMonth)/7)*7},(_,i)=>i-firstDay+1);
  const scheduled=notes.filter(n=>n.state==='scheduled'&&n.scheduled_at);
- return <div className="mt-7 overflow-hidden rounded-2xl border border-[#ded3c3] bg-[#f8f4ed] text-[#172d42] shadow-[0_16px_46px_rgba(21,37,50,0.05)]">
-  <div className="flex flex-col justify-between gap-4 border-b border-[#ded3c3] bg-[#fffdf8] px-5 py-5 md:flex-row md:items-center md:px-7">
-   <div><p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#987b4e]">PRIVATE EDITORIAL WORKSPACE</p><h2 className="mt-1 font-serif text-[27px] font-normal leading-tight md:text-[33px]">Notes Studio</h2><p className="mt-1 text-xs text-[#766c60]">Write, review and prepare your letters without altering the original voice.</p></div>
-   <div className="flex flex-wrap items-center gap-2"><span className="rounded-full border border-[#decfae] bg-[#faf3e5] px-3 py-1.5 text-[11px] font-medium text-[#79603a]">Private workspace</span><span className="rounded-full border border-[#d7ded3] bg-[#edf2ea] px-3 py-1.5 text-[11px] font-medium text-[#50604c]">{deliveryEnabled?'Delivery enabled':'Public delivery off'}</span><button type="button" className={primary} onClick={fresh}>+ New Note</button></div>
+ return <div className="mt-2 overflow-hidden rounded-2xl border border-[#ded3c3] bg-[#f8f4ed] text-[#172d42] shadow-[0_16px_46px_rgba(21,37,50,0.05)]">
+  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#ded3c3] bg-[#fffdf8] px-4 py-3 md:px-6">
+   <p className="text-xs font-medium text-[#776b5c]">Private editorial workspace</p>
+   <div className="flex flex-wrap items-center gap-2"><span className="inline-flex items-center gap-1.5 rounded-full border border-[#ded3c3] bg-[#faf3e7] px-3 py-1.5 text-[11px] font-medium text-[#755e42]"><StudioIcon name="lock"/>{deliveryEnabled?'Public delivery enabled':'Public delivery off'}</span><button type="button" className={primary+' gap-2'} onClick={fresh}><StudioIcon name="plus"/>New Note</button></div>
   </div>
-  <div className="grid min-h-[760px] lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[222px_minmax(0,1fr)]">
+  <div className="grid min-h-[760px] lg:grid-cols-[175px_minmax(0,1fr)] 2xl:grid-cols-[190px_minmax(0,1fr)]">
    <aside className="border-b border-[#d8ccb8] bg-[#203347] px-4 py-6 text-[#f7efe1] lg:border-b-0 lg:border-r lg:border-r-[#d8ccb8]">
-    <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#c3ad86]">WORKSPACE</p>
+    <div className="mb-5 border-b border-white/15 px-2 pb-5">
+     <p className="font-serif text-[23px] leading-tight text-[#fff8ef]">Notes Studio</p>
+     <p className="mt-1 text-[10px] tracking-wide text-[#c8bca9]">Write · Preview · Publish</p>
+    </div>
     <nav aria-label="Notes Studio sections" className="mt-4 flex flex-wrap gap-1 lg:flex-col">
-     {([['notes','All Notes'],['calendar','Publication Calendar'],['delivery','Delivery & Status']] as const).map(([key,label])=><button key={key} type="button" onClick={()=>openView(key)} aria-current={view===key?'page':undefined} className={'w-full rounded-lg px-3 py-3 text-left text-[13px] transition sm:w-auto lg:w-full '+(view===key?'bg-[#e9dcc5] font-semibold text-[#172d42]':'text-[#e6ddd0] hover:bg-white/10')}>{label}</button>)}
+     {([['notes','All Notes','notes'],['calendar','Publication Calendar','calendar'],['delivery','Delivery & Status','mail']] as const).map(([key,label,icon])=><button key={key} type="button" onClick={()=>openView(key)} aria-current={view===key?'page':undefined} className={'flex min-h-11 w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] transition sm:w-auto lg:w-full '+(view===key?'bg-[#e9dcc5] font-semibold text-[#172d42]':'text-[#e6ddd0] hover:bg-white/10')}><StudioIcon name={icon}/>{label}</button>)}
     </nav>
     <div className="mt-8 hidden border-t border-white/15 pt-6 lg:block"><p className="px-3 text-[10px] uppercase tracking-[0.17em] text-[#c3ad86]">At a glance</p><dl className="mt-3 space-y-3 px-3 text-xs"><div className="flex justify-between"><dt>Drafts</dt><dd>{counts.drafts}</dd></div><div className="flex justify-between"><dt>Scheduled</dt><dd>{counts.scheduled}</dd></div><div className="flex justify-between"><dt>Published</dt><dd>{counts.published}</dd></div></dl></div>
     <a href="/admin" className="mt-9 hidden border-t border-white/15 px-3 pt-5 text-xs text-[#e9dcc5] underline underline-offset-4 lg:block">Back to Dashboard</a>
    </aside>
-   <div className="min-w-0 p-4 md:p-6 xl:p-8">
-   {view==='notes'&&<div className="grid gap-5 xl:grid-cols-[minmax(210px,0.85fr)_minmax(0,2.15fr)]">
+   <div className="min-w-0 p-3 md:p-5 xl:p-6">
+   {view==='notes'&&<div className="grid gap-4 xl:grid-cols-[minmax(175px,0.55fr)_minmax(0,2.45fr)] 2xl:grid-cols-[minmax(210px,0.58fr)_minmax(0,2.42fr)]">
     <section className={panel+' self-start p-4'}>
-     <div className="flex items-center justify-between gap-3"><h3 className="font-serif text-xl">My Notes</h3><span className="text-xs text-[#81776b]">{notes.length} total</span></div>
+     <div className="flex items-center justify-between gap-3"><h3 className="flex items-center gap-2 font-serif text-xl"><StudioIcon name="notes" className="text-[#967743]"/>My Notes</h3><span className="text-xs text-[#81776b]">{notes.length} total</span></div>
      <label htmlFor="studio-search" className="sr-only">Search Notes</label>
      <input id="studio-search" className={field+' text-sm'} placeholder="Search Notes..." value={search} onChange={e=>setSearch(e.target.value)}/>
      <div className="mt-4 max-h-[630px] space-y-2 overflow-y-auto">
@@ -207,14 +211,14 @@ export function NotesStudioEditor({initialNotes,deliveryEnabled,cloudPhotosEnabl
       </button>)}
      </div>
     </section>
-    <section className={panel+' min-w-0 p-5 md:p-7'}>
+    <section className={panel+' min-w-0 p-4 md:p-6'}>
      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#e5daca] pb-5">
-      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 font-serif text-[26px] leading-tight">{selection?(selected?.title??draft.title):'An unwritten Note'}</h3></div>
+      <div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9b7a43]">{selection?'NOTE EDITOR · REVISION '+revision:'NEW DRAFT'}</p><h3 className="mt-1 flex items-center gap-2 font-serif text-[26px] leading-tight"><StudioIcon name="note" className="h-6 w-6 text-[#a58554]"/>{selection?(selected?.title??draft.title):'An unwritten Note'}</h3></div>
       <span className="rounded-md bg-[#f3ede3] px-3 py-1.5 text-xs text-[#756b5e]">{selection?state.toUpperCase():'UNSAVED'}{dirty?' · Unsaved changes':''}</span>
      </div>
 
-     <div role="tablist" aria-label="Draft views" className="mt-6 flex flex-wrap gap-2 border-b border-[#ded1ba]">
-      {([['edit','Editor'],['website','Website preview'],['email','Email preview']] as const).map(([key,label],index,tabs)=><button key={key} type="button" role="tab" id={'studio-tab-'+key} aria-controls={'studio-panel-'+key} aria-selected={editorTab===key} tabIndex={editorTab===key?0:-1} onClick={()=>setEditorTab(key)} onKeyDown={event=>{const next=event.key==='ArrowRight'?(index+1)%3:event.key==='ArrowLeft'?(index+2)%3:event.key==='Home'?0:event.key==='End'?2:-1;if(next>=0){event.preventDefault();setEditorTab(tabs[next][0]);document.getElementById('studio-tab-'+tabs[next][0])?.focus();}}} className={'min-h-11 rounded-t border border-b-0 px-4 py-2.5 text-[13px] font-semibold transition '+(editorTab===key?'border-[#17232c] bg-[#17232c] text-[#faf6ee]':'border-[#d5c7ae] bg-[#fffdf8] text-[#606364] hover:bg-[#f0e8da]')}>{label}</button>)}
+     <div role="tablist" aria-label="Draft views" className="mt-5 flex flex-wrap gap-1.5 border-b border-[#ded1ba]">
+      {([['edit','Editor'],['website','Website preview'],['email','Email preview']] as const).map(([key,label],index,tabs)=><button key={key} type="button" role="tab" id={'studio-tab-'+key} aria-controls={'studio-panel-'+key} aria-selected={editorTab===key} tabIndex={editorTab===key?0:-1} onClick={()=>setEditorTab(key)} onKeyDown={event=>{const next=event.key==='ArrowRight'?(index+1)%3:event.key==='ArrowLeft'?(index+2)%3:event.key==='Home'?0:event.key==='End'?2:-1;if(next>=0){event.preventDefault();setEditorTab(tabs[next][0]);document.getElementById('studio-tab-'+tabs[next][0])?.focus();}}} className={'min-h-11 rounded-t border border-b-0 px-4 py-2.5 text-[13px] font-semibold transition '+(editorTab===key?'border-[#17232c] bg-[#17232c] text-[#faf6ee]':'border-[#d5c7ae] bg-[#fffdf8] text-[#606364] hover:bg-[#f0e8da]')}><StudioIcon name={key==='edit'?'pen':key==='website'?'monitor':'mail'} className="mr-2"/>{label}</button>)}
      </div>
      <section id="studio-panel-edit" role="tabpanel" aria-labelledby="studio-tab-edit" hidden={editorTab!=='edit'} className="pt-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.65fr)_minmax(245px,1fr)]">
